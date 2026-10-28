@@ -1,0 +1,1857 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="color-scheme" content="dark light" />
+    <link rel="icon" href="data:," />
+    <title>App Design</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <style>
+      :root { color-scheme: dark; }
+      * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+      html, body { margin: 0; padding: 0; }
+      body {
+        font-family: "IBM Plex Sans Arabic", "Segoe UI", Tahoma, sans-serif;
+        background: #070707;
+        color: #f4f4f4;
+      }
+      button { font-family: inherit; }
+      input, textarea, select { font-family: inherit; }
+
+      .app {
+        --bg: #000000;
+        --panel: #0c0c0c;
+        --surface: #111111;
+        --surface2: #1b1b1b;
+        --border: #232323;
+        --border-soft: #1a1a1a;
+        --text: #f4f4f4;
+        --muted: #9b9b9b;
+        --faint: #5f5f5f;
+        --accent: #ff5a4d;
+        --green: #3ecf6e;
+        --amber: #f2b544;
+        --red: #ff6b5e;
+        --chat-fs: 16.5px;
+        position: relative;
+        width: min(440px, 100%);
+        height: 100dvh;
+        margin: 0 auto;
+        background: var(--bg);
+        color: var(--text);
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+      }
+      .app[data-theme="light"] {
+        --bg: #ffffff;
+        --panel: #fafafa;
+        --surface: #f4f4f2;
+        --surface2: #e9e9e6;
+        --border: #e0e0dc;
+        --border-soft: #ececea;
+        --text: #141414;
+        --muted: #6d6d68;
+        --faint: #a3a39e;
+        color-scheme: light;
+      }
+      @media (min-width: 560px) {
+        body { display: flex; align-items: center; justify-content: center; min-height: 100dvh; }
+        .app { height: min(930px, 96dvh); border: 1px solid #222; border-radius: 30px; box-shadow: 0 30px 80px rgba(0,0,0,.6); }
+      }
+
+      /* ---------- screens ---------- */
+      .screen { display: none; flex: 1; flex-direction: column; min-height: 0; }
+      .screen.active { display: flex; }
+      .scroll { flex: 1; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; scrollbar-color: #333 transparent; }
+      .scroll::-webkit-scrollbar { width: 4px; }
+      .scroll::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
+
+      /* ---------- top bars ---------- */
+      .topbar {
+        height: 52px; flex: none;
+        display: flex; align-items: center; gap: 2px;
+        padding: 0 10px;
+        border-bottom: 1px solid var(--border-soft);
+      }
+      .topbar .spacer { flex: 1; }
+      .icon-btn {
+        width: 38px; height: 38px; border: 0; border-radius: 11px;
+        background: transparent; color: #d6d6d6;
+        display: grid; place-items: center; cursor: pointer; flex: none;
+      }
+      .app[data-theme="light"] .icon-btn { color: #333; }
+      .icon-btn:hover { background: var(--surface2); }
+      .icon-btn.on { background: var(--surface2); color: var(--text); }
+      .icon-btn svg { width: 21px; height: 21px; }
+      .toks { font-size: 13.5px; font-weight: 600; color: #d8d8d8; direction: ltr; font-variant-numeric: tabular-nums; padding: 0 4px; white-space: nowrap; }
+      .app[data-theme="light"] .toks { color: #333; }
+      .tabhead { padding: 18px 18px 6px; flex: none; }
+      .tabhead h1 { margin: 0; font-size: 25px; font-weight: 700; letter-spacing: -.2px; }
+      .tabhead p { margin: 4px 0 0; font-size: 13.5px; color: var(--muted); line-height: 1.7; }
+      .subhead {
+        height: 52px; flex: none; display: flex; align-items: center; gap: 4px;
+        padding: 0 10px; border-bottom: 1px solid var(--border-soft);
+      }
+      .subhead h2 { margin: 0; font-size: 16.5px; font-weight: 700; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+      /* ---------- search ---------- */
+      .searchbar { padding: 10px 16px 2px; flex: none; }
+      .searchbox {
+        display: flex; align-items: center; gap: 8px;
+        background: var(--surface); border: 1px solid var(--border);
+        border-radius: 13px; padding: 0 12px; height: 42px;
+      }
+      .searchbox svg { width: 17px; height: 17px; color: var(--faint); flex: none; }
+      .searchbox input { flex: 1; background: none; border: 0; outline: none; color: var(--text); font-size: 14.5px; min-width: 0; }
+      .searchbox input::placeholder { color: var(--faint); }
+
+      /* ---------- lists & rows ---------- */
+      .group { margin: 20px 16px 0; }
+      .group-title { font-size: 12.5px; font-weight: 600; color: var(--muted); margin: 0 6px 9px; }
+      .card { background: var(--surface); border: 1px solid var(--border); border-radius: 17px; overflow: hidden; }
+      .row {
+        display: flex; align-items: center; gap: 12px;
+        width: 100%; padding: 13px 14px;
+        background: none; border: 0; color: var(--text);
+        text-align: start; cursor: pointer; font-size: 15px;
+      }
+      .row.static { cursor: default; }
+      .card .row + .row { border-top: 1px solid var(--border-soft); }
+      button.row:hover { background: var(--surface2); }
+      .row .ic {
+        width: 36px; height: 36px; border-radius: 11px; flex: none;
+        background: var(--surface2); color: var(--text);
+        display: grid; place-items: center;
+      }
+      .row .ic svg { width: 19px; height: 19px; }
+      .row .grow { flex: 1; min-width: 0; }
+      .row .t { display: block; font-size: 15px; font-weight: 600; line-height: 1.45; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+      .row .s { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; font-size: 12.5px; color: var(--muted); margin-top: 2px; line-height: 1.6; overflow: hidden; }
+      .row .s.wrap { white-space: normal; }
+      .chev { color: var(--faint); flex: none; display: grid; place-items: center; }
+      .chev svg { width: 18px; height: 18px; }
+      .brand {
+        width: 38px; height: 38px; border-radius: 11px; flex: none;
+        display: grid; place-items: center;
+        font-size: 14px; font-weight: 700; color: #fff; letter-spacing: .2px;
+      }
+      .brand svg { width: 21px; height: 21px; }
+      .dot { width: 8px; height: 8px; border-radius: 50%; flex: none; }
+      .dot.g { background: var(--green); }
+      .dot.gray { background: var(--faint); }
+      .dot.amber { background: var(--amber); }
+      .badge {
+        font-size: 11px; font-weight: 700; color: #fff; background: var(--accent);
+        border-radius: 99px; padding: 3px 9px; flex: none;
+      }
+      .val { font-size: 13.5px; color: var(--muted); flex: none; font-variant-numeric: tabular-nums; }
+
+      /* ---------- switch ---------- */
+      .sw {
+        width: 47px; height: 28px; border-radius: 99px; border: 0; flex: none;
+        background: var(--surface2); position: relative; cursor: pointer;
+        transition: background .2s; box-shadow: inset 0 0 0 1px var(--border);
+      }
+      .sw::after {
+        content: ""; position: absolute; top: 3px; inset-inline-start: 3px;
+        width: 22px; height: 22px; border-radius: 50%; background: #8f8f8f;
+        transition: transform .2s, background .2s;
+      }
+      .sw.on { background: var(--accent); box-shadow: none; }
+      .sw.on::after { transform: translateX(-19px); background: #fff; }
+
+      /* ---------- segmented ---------- */
+      .seg {
+        display: flex; gap: 3px; padding: 3px; flex: none;
+        background: var(--surface2); border-radius: 12px;
+      }
+      .seg button {
+        flex: 1; border: 0; background: transparent; color: var(--muted);
+        font-size: 12.8px; font-weight: 600; padding: 7px 6px;
+        border-radius: 9px; cursor: pointer; white-space: nowrap;
+        display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+      }
+      .seg button.on { background: var(--bg); color: var(--text); box-shadow: 0 1px 5px rgba(0,0,0,.35); }
+      .app[data-theme="light"] .seg button.on { box-shadow: 0 1px 5px rgba(0,0,0,.12); }
+      .seg .sdot { width: 7px; height: 7px; border-radius: 50%; }
+      .perm-row { padding: 13px 14px; }
+      .card .perm-row + .perm-row { border-top: 1px solid var(--border-soft); }
+      .perm-head { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
+      .perm-head .ic { width: 34px; height: 34px; border-radius: 10px; background: var(--surface2); display: grid; place-items: center; flex: none; }
+      .perm-head .ic svg { width: 18px; height: 18px; }
+      .perm-head .t { display: block; font-size: 14.5px; font-weight: 600; }
+      .perm-head .s { display: block; font-size: 12px; color: var(--muted); margin-top: 1px; line-height: 1.55; }
+
+      /* ---------- fields ---------- */
+      .field { margin: 16px 16px 0; }
+      .field label { display: block; font-size: 12.5px; font-weight: 600; color: var(--muted); margin: 0 4px 8px; }
+      .inputbox {
+        display: flex; align-items: center; gap: 8px;
+        background: var(--surface); border: 1px solid var(--border);
+        border-radius: 13px; padding: 0 12px; min-height: 46px;
+      }
+      .inputbox input, .inputbox textarea {
+        flex: 1; background: none; border: 0; outline: none; resize: none;
+        color: var(--text); font-size: 14.5px; min-width: 0; padding: 11px 0; line-height: 1.6;
+      }
+      .inputbox input.ltr { direction: ltr; text-align: left; font-size: 13.5px; }
+      .inputbox .mini-btn { border: 0; background: none; color: var(--muted); cursor: pointer; display: grid; place-items: center; padding: 4px; flex: none; }
+      .inputbox .mini-btn svg { width: 18px; height: 18px; }
+      .hint { font-size: 12px; color: var(--faint); margin: 7px 6px 0; line-height: 1.7; }
+
+      .btn {
+        display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+        border-radius: 13px; border: 1px solid var(--border);
+        background: var(--surface); color: var(--text);
+        font-size: 14.5px; font-weight: 600; padding: 12px 16px; cursor: pointer;
+      }
+      .btn svg { width: 17px; height: 17px; }
+      .btn.accent { background: var(--accent); border-color: var(--accent); color: #fff; }
+      .btn.block { display: flex; width: 100%; }
+      .btn.danger { color: var(--red); }
+      .btn:disabled { opacity: .55; cursor: default; }
+      .btnrow { margin: 16px 16px 0; display: flex; gap: 10px; }
+      .btnrow .btn { flex: 1; }
+
+      /* radio rows (models) */
+      .radio { width: 21px; height: 21px; border-radius: 50%; border: 2px solid var(--faint); flex: none; position: relative; }
+      .radio.on { border-color: var(--accent); }
+      .radio.on::after { content: ""; position: absolute; inset: 3.5px; border-radius: 50%; background: var(--accent); }
+      .mono { direction: ltr; text-align: left; font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-size: 13px; }
+
+      /* sliders */
+      input[type="range"] { width: 100%; accent-color: var(--accent); height: 28px; cursor: pointer; }
+      .slider-wrap { padding: 4px 14px 12px; }
+      .card .slider-wrap { border-top: 1px solid var(--border-soft); }
+
+      /* swatches */
+      .swatches { display: flex; gap: 12px; padding: 6px 14px 14px; }
+      .swatch { width: 34px; height: 34px; border-radius: 50%; border: 2px solid transparent; cursor: pointer; padding: 0; position: relative; flex: none; }
+      .swatch.on { border-color: var(--text); box-shadow: 0 0 0 3px var(--bg), 0 0 0 5px var(--text); }
+
+      /* ---------- chat ---------- */
+      .chat-scroll { padding: 18px 20px 8px; }
+      .msg { font-size: var(--chat-fs); line-height: 1.95; margin-bottom: 22px; overflow-wrap: break-word; }
+      .msg.user { display: flex; }
+      .msg.user .bubble {
+        background: var(--surface2); border-radius: 19px; padding: 9px 15px;
+        max-width: 88%; line-height: 1.8;
+      }
+      .msg.user.plain .bubble { background: none; padding: 9px 0; }
+      .msg.assistant h3 { font-size: calc(var(--chat-fs) + 2.5px); font-weight: 700; margin: 20px 0 8px; line-height: 1.6; }
+      .msg.assistant h3:first-child { margin-top: 0; }
+      .msg.assistant p { margin: 0 0 10px; }
+      .msg.assistant ul { margin: 4px 0 12px; padding-inline-start: 21px; }
+      .msg.assistant li { margin: 7px 0; }
+      .msg.assistant li::marker { color: var(--faint); }
+      .msg.assistant strong { font-weight: 700; }
+      .msg.assistant em { color: var(--muted); }
+      .cursor-blink { display: inline-block; width: 2px; height: 1.05em; background: var(--text); vertical-align: -0.15em; margin-inline-start: 2px; animation: blink 1s steps(1) infinite; }
+      @keyframes blink { 50% { opacity: 0; } }
+      .empty-chat { text-align: center; color: var(--muted); padding: 60px 30px 0; }
+      .empty-chat .big { font-size: 21px; font-weight: 700; color: var(--text); margin-bottom: 8px; }
+      .empty-chat p { font-size: 14px; line-height: 1.9; margin: 0; }
+      .sugg { display: flex; flex-direction: column; gap: 9px; margin-top: 26px; }
+      .sugg button {
+        background: var(--surface); border: 1px solid var(--border); color: var(--text);
+        border-radius: 14px; padding: 12px 14px; font-size: 14px; text-align: start; cursor: pointer;
+      }
+      .sugg button:hover { background: var(--surface2); }
+
+      .composer-wrap { flex: none; padding: 8px 10px calc(10px + env(safe-area-inset-bottom)); }
+      .composer {
+        background: var(--surface); border: 1px solid var(--border);
+        border-radius: 26px; padding: 10px 10px 8px;
+      }
+      .composer .inrow { display: flex; align-items: flex-end; gap: 6px; }
+      .composer textarea {
+        flex: 1; background: none; border: 0; outline: none; resize: none;
+        color: var(--text); font-size: 16px; line-height: 1.55; max-height: 110px;
+        padding: 7px 2px; min-width: 0;
+      }
+      .composer textarea::placeholder { color: var(--faint); }
+      .attach-btn { width: 38px; height: 38px; border: 0; background: none; color: var(--muted); display: grid; place-items: center; cursor: pointer; border-radius: 50%; flex: none; }
+      .attach-btn svg { width: 21px; height: 21px; }
+      .send-btn {
+        width: 40px; height: 40px; border-radius: 50%; flex: none;
+        border: 1.6px solid var(--border); background: var(--surface2); color: var(--faint);
+        display: grid; place-items: center; cursor: pointer; transition: all .15s;
+      }
+      .send-btn svg { width: 19px; height: 19px; }
+      .send-btn.ready { background: var(--accent); border-color: var(--accent); color: #fff; }
+      .send-btn.stop { background: transparent; border-color: var(--accent); color: var(--accent); }
+      .send-btn.stop .sq { width: 13px; height: 13px; border-radius: 3.5px; background: var(--accent); }
+      .composer-meta { display: flex; align-items: center; gap: 4px; margin-top: 7px; padding: 0 2px; }
+      .meta-chip {
+        display: inline-flex; align-items: center; gap: 5px;
+        background: none; border: 0; color: var(--muted); cursor: pointer;
+        font-size: 12px; font-weight: 600; padding: 5px 5px; border-radius: 9px;
+        min-width: 0; overflow: hidden;
+      }
+      #chip-model { flex: 1 1 auto; justify-content: flex-start; }
+      #chip-think { flex: none; }
+      .meta-chip:hover { background: var(--surface2); }
+      .meta-chip .nm { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; direction: ltr; min-width: 0; letter-spacing: -0.3px; }
+      .meta-chip svg { width: 13px; height: 13px; flex: none; }
+      .meta-chip .chevdn svg { width: 13px; height: 13px; }
+      #chip-usage { flex: none; }
+      #chip-usage svg { width: 17px; height: 17px; }
+      @media (max-width: 360px) { #chip-usage span { display: none; } }
+      .plus-btn, .mic-btn { width: 34px; height: 34px; border: 0; background: none; color: var(--muted); display: grid; place-items: center; cursor: pointer; border-radius: 50%; flex: none; }
+      .plus-btn svg { width: 21px; height: 21px; }
+      .mic-btn svg { width: 19px; height: 19px; }
+      .attach-tray { display: none; gap: 6px; flex-wrap: wrap; padding: 0 2px 8px; }
+      .attach-tray.has { display: flex; }
+      .attach-chip { display: inline-flex; align-items: center; gap: 6px; background: var(--surface2); border: 1px solid var(--border); border-radius: 12px; padding: 5px 8px; font-size: 12px; max-width: 100%; }
+      .attach-chip img { width: 44px; height: 44px; object-fit: cover; border-radius: 8px; }
+      .attach-chip audio { width: 180px; height: 28px; }
+      .attach-chip .nm { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 150px; }
+      .attach-chip .rm { border: 0; background: none; color: var(--muted); cursor: pointer; font-size: 16px; line-height: 1; padding: 0 2px; }
+      .msg .att { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 6px; }
+      .msg .att img { max-width: 220px; border-radius: 12px; }
+      .msg .att audio { width: 220px; height: 30px; }
+      .msg .att .fchip { background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 6px 10px; font-size: 12px; }
+
+      /* ---------- bottom nav ---------- */
+      .bottomnav {
+        flex: none; display: flex; border-top: 1px solid var(--border-soft);
+        background: var(--bg); padding-bottom: env(safe-area-inset-bottom);
+      }
+      .bottomnav button {
+        flex: 1; border: 0; background: none; cursor: pointer;
+        color: var(--faint); padding: 9px 0 8px;
+        display: flex; flex-direction: column; align-items: center; gap: 3px;
+        font-size: 11px; font-weight: 600;
+      }
+      .bottomnav button svg { width: 22px; height: 22px; }
+      .bottomnav button.on { color: var(--text); }
+      .bottomnav button.on svg { color: var(--accent); }
+      .screen-wrap { flex: 1; display: flex; flex-direction: column; min-height: 0; position: relative; }
+
+      /* ---------- sheets / drawer / toast ---------- */
+      .overlay {
+        position: absolute; inset: 0; background: rgba(0,0,0,.62);
+        opacity: 0; pointer-events: none; transition: opacity .22s; z-index: 30;
+      }
+      .overlay.open { opacity: 1; pointer-events: auto; }
+      .sheet {
+        position: absolute; inset-inline: 0; bottom: 0; z-index: 31;
+        background: var(--panel); border-top: 1px solid var(--border);
+        border-radius: 24px 24px 0 0;
+        padding: 10px 18px calc(20px + env(safe-area-inset-bottom));
+        transform: translateY(105%); visibility: hidden; pointer-events: none;
+        transition: transform .26s cubic-bezier(.32,.72,.28,1), visibility 0s linear .26s;
+        max-height: 82%; overflow-y: auto;
+      }
+      .sheet.open { transform: translateY(0); visibility: visible; pointer-events: auto; transition: transform .26s cubic-bezier(.32,.72,.28,1); }
+      .sheet .handle { width: 38px; height: 4.5px; border-radius: 99px; background: var(--surface2); margin: 2px auto 14px; }
+      .sheet h3 { margin: 0 0 4px; font-size: 17.5px; font-weight: 700; }
+      .sheet .sub { font-size: 13px; color: var(--muted); line-height: 1.75; margin: 0 0 6px; }
+      .sheet .opt {
+        display: flex; align-items: center; gap: 12px; width: 100%;
+        background: none; border: 0; color: var(--text); cursor: pointer;
+        padding: 13px 4px; font-size: 15px; font-weight: 600; text-align: start;
+      }
+      .sheet .opt + .opt { border-top: 1px solid var(--border-soft); }
+      .sheet .opt .s { display: block; font-size: 12.5px; color: var(--muted); font-weight: 400; margin-top: 2px; line-height: 1.6; }
+      .sheet .opt .grow { flex: 1; min-width: 0; }
+      .sheet .opt .check { color: var(--accent); flex: none; }
+      .sheet .opt .check svg { width: 19px; height: 19px; }
+      .cmd {
+        direction: ltr; text-align: left; font-family: ui-monospace, Menlo, Consolas, monospace;
+        background: var(--bg); border: 1px solid var(--border); border-radius: 11px;
+        padding: 11px 13px; font-size: 13px; color: #ffb3a7; margin: 10px 0 4px;
+        overflow-x: auto; white-space: nowrap;
+      }
+      .app[data-theme="light"] .cmd { color: #c23a2c; }
+      .drawer {
+        position: absolute; top: 0; bottom: 0; inset-inline-start: 0; width: min(308px, 84%);
+        background: var(--panel); border-inline-end: 1px solid var(--border); z-index: 31;
+        transform: translateX(105%); visibility: hidden; pointer-events: none;
+        transition: transform .26s cubic-bezier(.32,.72,.28,1), visibility 0s linear .26s;
+        display: flex; flex-direction: column; padding: 14px 12px calc(14px + env(safe-area-inset-bottom));
+      }
+      .drawer.open { transform: translateX(0); visibility: visible; pointer-events: auto; transition: transform .26s cubic-bezier(.32,.72,.28,1); }
+      .drawer .d-title { font-size: 12.5px; font-weight: 600; color: var(--muted); margin: 16px 8px 8px; }
+      .drawer .chat-item {
+        display: flex; align-items: center; gap: 10px; width: 100%;
+        background: none; border: 0; color: var(--text); cursor: pointer;
+        padding: 11px 10px; border-radius: 12px; font-size: 14.5px; font-weight: 500; text-align: start;
+      }
+      .drawer .chat-item:hover, .drawer .chat-item.on { background: var(--surface2); }
+      .drawer .chat-item .grow { display: block; flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+      .drawer .chat-item time { font-size: 11.5px; color: var(--faint); flex: none; }
+      .toast {
+        position: absolute; left: 50%; bottom: 86px; transform: translate(-50%, 16px);
+        background: var(--surface2); color: var(--text); border: 1px solid var(--border);
+        font-size: 13.5px; font-weight: 600; padding: 10px 16px; border-radius: 99px;
+        opacity: 0; pointer-events: none; transition: all .25s; z-index: 50;
+        max-width: 88%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        box-shadow: 0 10px 30px rgba(0,0,0,.45);
+      }
+      .toast.show { opacity: 1; transform: translate(-50%, 0); }
+      .spin {
+        width: 16px; height: 16px; border-radius: 50%; flex: none;
+        border: 2px solid rgba(255,255,255,.35); border-top-color: #fff;
+        animation: sp .7s linear infinite; display: inline-block;
+      }
+      .spin.dark { border-color: var(--border); border-top-color: var(--muted); }
+      @keyframes sp { to { transform: rotate(360deg); } }
+      .kbd-note { font-size: 12px; color: var(--faint); text-align: center; margin: 22px 30px 30px; line-height: 1.8; }
+      .noanim * { transition: none !important; animation: none !important; }
+      @media (prefers-reduced-motion: reduce) {
+        * { transition: none !important; animation: none !important; }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="app" id="app" data-theme="dark">
+      <div class="screen-wrap">
+
+        <!-- ============ CHAT ============ -->
+        <section class="screen active" id="scr-chat">
+          <div class="topbar">
+            <button class="icon-btn" id="btn-drawer" aria-label="القائمة"></button>
+            <button class="icon-btn" id="tgl-web" aria-label="بحث الويب"></button>
+            <button class="icon-btn" id="tgl-fast" aria-label="الوضع السريع"></button>
+            <button class="icon-btn" id="btn-context" aria-label="السياق"></button>
+            <div class="spacer"></div>
+            <span class="toks" id="toks">— tok/s</span>
+            <button class="icon-btn" id="btn-newchat" aria-label="دردشة جديدة"></button>
+          </div>
+          <div class="scroll chat-scroll" id="chat-scroll"></div>
+          <div class="composer-wrap">
+            <div class="composer">
+              <div class="attach-tray" id="attach-tray"></div>
+              <div class="inrow">
+                <textarea id="chat-input" rows="1" placeholder="اسأل أي شيء"></textarea>
+                <button class="plus-btn" id="btn-plus" aria-label="إضافة"></button>
+                <button class="mic-btn" id="btn-mic" aria-label="تسجيل صوتي"></button>
+                <button class="send-btn" id="btn-send" aria-label="إرسال"></button>
+              </div>
+              <input type="file" id="file-image" accept="image/*" hidden />
+              <input type="file" id="file-any" hidden />
+              <input type="file" id="file-audio" accept="audio/*" hidden />
+              <div class="composer-meta">
+                <button class="meta-chip" id="chip-model"></button>
+                <button class="meta-chip" id="chip-think"></button>
+                <button class="meta-chip" id="chip-usage"></button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ============ PROVIDERS ============ -->
+        <section class="screen" id="scr-providers">
+          <div class="tabhead">
+            <h1>المزوّدون</h1>
+            <p>اربط أي مزوّد نماذج، بدّل بينهم بضغطة، ومفاتيحك تبقى عندك.</p>
+          </div>
+          <div class="searchbar">
+            <div class="searchbox"><span data-ic="search"></span><input id="prov-search" type="text" placeholder="بحث في المزوّدين…" /></div>
+          </div>
+          <div class="scroll" id="prov-scroll">
+            <div class="group">
+              <div class="group-title">كل المزوّدين</div>
+              <div class="card" id="prov-list"></div>
+            </div>
+            <div class="btnrow">
+              <button class="btn block" id="btn-add-provider"></button>
+            </div>
+            <p class="kbd-note">المزوّد الافتراضي هو من يجيب في الدردشة. تگدر تضيف أي خدمة متوافقة مع OpenAI بعنوانها ومفتاحها فقط.</p>
+          </div>
+        </section>
+
+        <!-- ============ PROVIDER DETAIL ============ -->
+        <section class="screen" id="scr-provider">
+          <div class="subhead">
+            <button class="icon-btn" data-back="providers" aria-label="رجوع"></button>
+            <h2 id="pd-name">المزوّد</h2>
+            <span id="pd-badge"></span>
+          </div>
+          <div class="scroll" id="pd-scroll"></div>
+        </section>
+
+        <!-- ============ CONNECTORS ============ -->
+        <section class="screen" id="scr-connectors">
+          <div class="tabhead">
+            <h1>الموصّلات</h1>
+            <p>اربط حساباتك وأدواتك، وحدّد لكل موصّل ما يصله المساعد بالضبط — لا أكثر.</p>
+          </div>
+          <div class="searchbar">
+            <div class="searchbox"><span data-ic="search"></span><input id="conn-search" type="text" placeholder="بحث في الموصّلات…" /></div>
+          </div>
+          <div class="scroll" id="conn-scroll"></div>
+        </section>
+
+        <!-- ============ CONNECTOR DETAIL ============ -->
+        <section class="screen" id="scr-connector">
+          <div class="subhead">
+            <button class="icon-btn" data-back="connectors" aria-label="رجوع"></button>
+            <h2 id="cd-name">الموصّل</h2>
+            <span class="dot gray" id="cd-dot"></span>
+          </div>
+          <div class="scroll" id="cd-scroll"></div>
+        </section>
+
+        <!-- ============ SETTINGS HUB ============ -->
+        <section class="screen" id="scr-settings">
+          <div class="tabhead">
+            <h1>الإعدادات</h1>
+            <p>كل شيء قابل للضبط من هنا — الصلاحيات، التوليد، المظهر، والذاكرة.</p>
+          </div>
+          <div class="scroll">
+            <div class="group">
+              <div class="group-title">الاتصال</div>
+              <div class="card" id="hub-conn"></div>
+            </div>
+            <div class="group">
+              <div class="group-title">التحكم</div>
+              <div class="card" id="hub-ctrl"></div>
+            </div>
+            <div class="group">
+              <div class="group-title">التطبيق</div>
+              <div class="card" id="hub-app"></div>
+            </div>
+            <p class="kbd-note">نموذج تصميم تفاعلي للواجهة — جرّب كل زر ومفتاح، كل شيء يشتغل داخل الصفحة.</p>
+          </div>
+        </section>
+
+        <!-- ============ PERMISSIONS ============ -->
+        <section class="screen" id="scr-permissions">
+          <div class="subhead">
+            <button class="icon-btn" data-back="settings" aria-label="رجوع"></button>
+            <h2>الصلاحيات</h2>
+          </div>
+          <div class="scroll">
+            <div class="group">
+              <div class="group-title">وضع جاهز — يضبط الكل دفعة واحدة</div>
+              <div class="seg" id="perm-preset" style="margin:0 2px;">
+                <button data-preset="strict">صارم</button>
+                <button data-preset="balanced">متوازن</button>
+                <button data-preset="free">حر</button>
+                <button data-preset="custom">مخصص</button>
+              </div>
+              <p class="hint" id="preset-hint"></p>
+            </div>
+            <div id="perm-groups"></div>
+            <div class="btnrow">
+              <button class="btn block" id="btn-perm-demo"></button>
+            </div>
+            <p class="kbd-note">وضع «اسألني» يعني يقف المساعد عند كل إجراء من هذا النوع وينتظر موافقتك — مرة واحدة، أو دائمًا، أو رفض.</p>
+          </div>
+        </section>
+
+        <!-- ============ GENERATION ============ -->
+        <section class="screen" id="scr-generation">
+          <div class="subhead">
+            <button class="icon-btn" data-back="settings" aria-label="رجوع"></button>
+            <h2>التوليد والنماذج</h2>
+          </div>
+          <div class="scroll" id="gen-scroll"></div>
+        </section>
+
+        <!-- ============ APPEARANCE ============ -->
+        <section class="screen" id="scr-appearance">
+          <div class="subhead">
+            <button class="icon-btn" data-back="settings" aria-label="رجوع"></button>
+            <h2>المظهر</h2>
+          </div>
+          <div class="scroll" id="app-scroll"></div>
+        </section>
+
+        <!-- ============ MEMORY & DATA ============ -->
+        <section class="screen" id="scr-memory">
+          <div class="subhead">
+            <button class="icon-btn" data-back="settings" aria-label="رجوع"></button>
+            <h2>الذاكرة والبيانات</h2>
+          </div>
+          <div class="scroll" id="mem-scroll"></div>
+        </section>
+
+        <!-- ============ ABOUT ============ -->
+        <section class="screen" id="scr-about">
+          <div class="subhead">
+            <button class="icon-btn" data-back="settings" aria-label="رجوع"></button>
+            <h2>حول التطبيق</h2>
+          </div>
+          <div class="scroll" id="about-scroll"></div>
+        </section>
+      </div>
+
+      <!-- bottom nav -->
+      <nav class="bottomnav" id="bottomnav"></nav>
+
+      <!-- drawer (contents built on first open) -->
+      <div class="overlay" id="overlay"></div>
+      <aside class="drawer" id="drawer"></aside>
+
+      <!-- generic sheet -->
+      <div class="sheet" id="sheet">
+        <div class="handle"></div>
+        <div id="sheet-body"></div>
+      </div>
+
+      <div class="toast" id="toast"></div>
+    </div>
+    <script>
+      "use strict";
+      /* =============== icons (inline SVG, stroke style) =============== */
+      var P = {
+        menu: '<line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/>',
+        globe: '<circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><path d="M12 3a15 15 0 0 1 0 18a15 15 0 0 1 0-18z"/>',
+        zap: '<path d="M13 2 4.5 13.5H11L9.8 22 19 10h-6.5L13 2z"/>',
+        layers: '<path d="M12 3 3 8l9 5 9-5-9-5z"/><path d="M3 13l9 5 9-5"/>',
+        edit: '<path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4.2 1.1L3.9 16 16.5 3.5z"/>',
+        clip: '<path d="M21 12.5l-8.5 8.5a5.5 5.5 0 0 1-7.8-7.8L13 4.9a3.7 3.7 0 0 1 5.2 5.2l-8.2 8.2a1.85 1.85 0 0 1-2.6-2.6l7.4-7.4"/>',
+        up: '<line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/>',
+        chevD: '<polyline points="6 9 12 15 18 9"/>',
+        chevR: '<polyline points="9 6 15 12 9 18"/>',
+        chevL: '<polyline points="15 6 9 12 15 18"/>',
+        search: '<circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.5" y2="16.5"/>',
+        plus: '<line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>',
+        x: '<line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>',
+        check: '<polyline points="20 6 9 17 4 12"/>',
+        eye: '<path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/>',
+        eyeOff: '<path d="M9.9 4.24A9.5 9.5 0 0 1 12 4c6.5 0 10 8 10 8a13.2 13.2 0 0 1-1.67 2.68"/><path d="M6.61 6.61A13.5 13.5 0 0 0 2 12s3.5 8 10 8a9.7 9.7 0 0 0 5.39-1.61"/><line x1="2" y1="2" x2="22" y2="22"/><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/>',
+        trash: '<path d="M3 6h18"/><path d="M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>',
+        folder: '<path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7z"/>',
+        file: '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6z"/><path d="M14 2v6h6"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="13" y2="17"/>',
+        terminal: '<rect x="2" y="4" width="20" height="16" rx="2"/><polyline points="6 9 10 12 6 15"/><line x1="12.5" y1="15" x2="18" y2="15"/>',
+        pkg: '<path d="M21 8v8l-9 5-9-5V8l9-5 9 5z"/><path d="M3 8l9 5 9-5"/><path d="M12 13v8"/>',
+        link: '<path d="M10 14a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1.7 1.7"/><path d="M14 10a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1.7-1.7"/>',
+        download: '<path d="M12 3v12"/><polyline points="6 10 12 16 18 10"/><path d="M4 21h16"/>',
+        camera: '<path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/>',
+        mic: '<rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0"/><line x1="12" y1="19" x2="12" y2="22"/>',
+        pin: '<path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0z"/><circle cx="12" cy="10" r="3"/>',
+        bell: '<path d="M18 8a6 6 0 1 0-12 0c0 7-3 8-3 8h18s-3-1-3-8"/><path d="M10.3 21a2 2 0 0 0 3.4 0"/>',
+        clipboard: '<rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/>',
+        user: '<circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-6.5 8-6.5s8 2.5 8 6.5"/>',
+        shield: '<path d="M12 22s8-3.6 8-10V5l-8-3-8 3v7c0 6.4 8 10 8 10z"/>',
+        key: '<circle cx="8" cy="15" r="4.5"/><path d="M11.2 11.8 20 3"/><path d="M16.5 6.5l3 3"/>',
+        server: '<rect x="2" y="3" width="20" height="7" rx="2"/><rect x="2" y="14" width="20" height="7" rx="2"/><line x1="6" y1="6.5" x2="6.01" y2="6.5"/><line x1="6" y1="17.5" x2="6.01" y2="17.5"/>',
+        plug: '<path d="M9 7V3"/><path d="M15 7V3"/><path d="M7 7h10v3a5 5 0 0 1-10 0V7z"/><path d="M12 15v6"/>',
+        gear: '<circle cx="12" cy="12" r="3.2"/><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/>',
+        msg: '<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>',
+        sliders: '<line x1="21" y1="4" x2="14" y2="4"/><line x1="10" y1="4" x2="3" y2="4"/><line x1="21" y1="12" x2="12" y2="12"/><line x1="8" y1="12" x2="3" y2="12"/><line x1="21" y1="20" x2="16" y2="20"/><line x1="12" y1="20" x2="3" y2="20"/><line x1="14" y1="2" x2="14" y2="6"/><line x1="8" y1="10" x2="8" y2="14"/><line x1="16" y1="18" x2="16" y2="22"/>',
+        palette: '<circle cx="12" cy="12" r="9"/><circle cx="8.5" cy="10" r="1" fill="currentColor"/><circle cx="12" cy="7.5" r="1" fill="currentColor"/><circle cx="15.5" cy="10" r="1" fill="currentColor"/><path d="M12 21a2.5 2.5 0 0 0 2.5-2.5c0-1.5 1.2-2 2.5-2a4.5 4.5 0 0 0 4.5-4.5"/>',
+        db: '<ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v14c0 1.7 3.6 3 8 3s8-1.3 8-3V5"/><path d="M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"/>',
+        info: '<circle cx="12" cy="12" r="9"/><line x1="12" y1="11" x2="12" y2="16"/><line x1="12" y1="8" x2="12.01" y2="8"/>',
+        refresh: '<path d="M21 12a9 9 0 1 1-2.64-6.36"/><polyline points="21 3 21 9 15 9"/>',
+        mail: '<rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-10 6L2 7"/>',
+        calendar: '<rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>',
+        send: '<path d="M22 2 11 13"/><path d="M22 2 15 22l-4-9-9-4 20-7z"/>',
+        cloud: '<path d="M17.5 19a4.5 4.5 0 0 0 .9-8.9A6 6 0 0 0 6.7 11.6 4 4 0 0 0 7 19h10.5z"/>',
+        grid: '<rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/>',
+        bulb: '<path d="M9 18h6"/><path d="M10 21h4"/><path d="M12 3a6 6 0 0 0-4 10.5c.8.7 1 1.5 1 2.5h6c0-1 .2-1.8 1-2.5A6 6 0 0 0 12 3z"/>',
+        cpu: '<rect x="5" y="5" width="14" height="14" rx="2"/><rect x="9.5" y="9.5" width="5" height="5"/><path d="M9 2v3M15 2v3M9 19v3M15 19v3M2 9h3M2 15h3M19 9h3M19 15h3"/>',
+        github: '<path fill="currentColor" stroke="none" d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12z"/>',
+        usage: '<path d="M8 2v12"/><polyline points="5 11 8 14 11 11"/><path d="M16 15V5"/><polyline points="13 8 16 5 19 8"/><rect x="3" y="15" width="18" height="5" rx="2.5"/>',
+      };
+      function ic(name, cls) {
+        return '<svg class="' + (cls || "") + '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + (P[name] || "") + "</svg>";
+      }
+      function el(html) { var d = document.createElement("div"); d.innerHTML = html; return d.firstElementChild; }
+      function esc(s) { return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;"); }
+
+      /* =============== state =============== */
+      var state = {
+        tab: "chat",
+        thinking: "medium",
+        webSearch: true,
+        fast: false,
+        ctxMemory: true,
+        temperature: 0.7,
+        maxTokens: "8K",
+        showThinking: true,
+        streaming: true,
+        autosave: true,
+        showToks: true,
+        userBubble: true,
+        reduceMotion: false,
+        memoryOn: true,
+        systemPrompt: "أنت مساعد ذكي يعمل داخل تطبيق شخصي. أجب بالعربية ما لم يُطلب غير ذلك، وكن مباشرًا ومختصرًا، واسأل قبل أي إجراء حسّاس حسب الصلاحيات المضبوطة."
+      };
+
+      var providers = [
+        { id: "deepseek", name: "DeepSeek", mark: "DS", color: "#3355c8", desc: "المزوّد الافتراضي الحالي", base: "https://api.deepseek.com", key: true, keyVal: "", enabled: true, active: true, builtin: true,
+          models: ["DeepSeek-V4.1-Flash-1017", "DeepSeek-V4.1-Flash", "DeepSeek-R1"], model: 0 },
+        { id: "custom1", name: "مزوّد مخصص", mark: "+", color: "#3f3f3f", desc: "متوافق مع OpenAI — بوابة Lighthouse", base: "https://lighthouse.dphn.ai/run/text-v/v1", key: true, keyVal: "", enabled: true, active: false, builtin: false,
+          models: ["deepseek-ai/DeepSeek-V4.1-Flash"], model: 0 },
+        { id: "openai", name: "OpenAI", mark: "O", color: "#0f8a6d", desc: "نماذج GPT و o-series", base: "https://api.openai.com/v1", key: true, keyVal: "", enabled: true, active: false, builtin: true,
+          models: ["GPT-4.1", "GPT-4o", "o4-mini"], model: 0 },
+        { id: "anthropic", name: "Anthropic", mark: "A", color: "#b06a45", desc: "نماذج Claude", base: "https://api.anthropic.com", key: false, keyVal: "", enabled: false, active: false, builtin: true,
+          models: ["Claude Sonnet 4", "Claude Opus 4", "Claude Haiku 3.5"], model: 0 },
+        { id: "gemini", name: "Google Gemini", mark: "G", color: "#3f7fbf", desc: "نماذج Gemini", base: "https://generativelanguage.googleapis.com", key: false, keyVal: "", enabled: false, active: false, builtin: true,
+          models: ["Gemini 2.5 Pro", "Gemini 2.5 Flash"], model: 0 },
+        { id: "openrouter", name: "OpenRouter", mark: "OR", color: "#5f6b8a", desc: "بوابة واحدة لمئات النماذج", base: "https://openrouter.ai/api/v1", key: false, keyVal: "", enabled: false, active: false, builtin: true,
+          models: [], model: 0 },
+        { id: "ollama", name: "محلي (Ollama)", mark: "Ol", color: "#4a4a4a", desc: "يعمل على شبكتك المحلية", base: "http://192.168.1.151:11434", key: false, keyVal: "", enabled: false, active: false, builtin: true, local: true,
+          models: [], model: 0 }
+      ];
+
+      var connectors = [
+        { id: "github", name: "GitHub", icon: "github", color: "#26262b", desc: "المستودعات، الملفات، وطلبات السحب", connected: true, account: "@aqil7aie",
+          scopes: [["قراءة المستودعات والملفات", "allow"], ["إنشاء وتعديل الملفات", "ask"], ["إدارة Issues وطلبات السحب", "ask"], ["حذف المستودعات", "deny"]] },
+        { id: "gdrive", name: "Google Drive", icon: "cloud", color: "#2f6db3", desc: "ملفاتك ومجلداتك السحابية", connected: true, account: "حساب Google المرتبط",
+          scopes: [["قراءة الملفات", "allow"], ["رفع ملفات جديدة", "ask"], ["مشاركة الملفات مع آخرين", "ask"], ["حذف الملفات", "deny"]] },
+        { id: "gmail", name: "Gmail", icon: "mail", color: "#b3402f", desc: "قراءة البريد وصياغة الردود", connected: false, account: "حساب Google المرتبط",
+          scopes: [["قراءة الرسائل", "ask"], ["صياغة مسودات", "allow"], ["إرسال رسائل", "ask"], ["حذف الرسائل", "deny"]] },
+        { id: "gcal", name: "Google Calendar", icon: "calendar", color: "#3d7a44", desc: "مواعيدك وأحداثك القادمة", connected: false, account: "حساب Google المرتبط",
+          scopes: [["قراءة الأحداث", "allow"], ["إنشاء أحداث", "ask"], ["حذف أحداث", "ask"]] },
+        { id: "telegram", name: "Telegram", icon: "send", color: "#2f7fb8", desc: "إرسال التنبيهات والرسائل عبر بوت", connected: false, account: "حساب Telegram المرتبط",
+          scopes: [["إرسال رسائل إليك", "allow"], ["إرسال رسائل للآخرين", "ask"], ["قراءة المحادثات", "deny"]] },
+        { id: "discord", name: "Discord", icon: "msg", color: "#4c57a8", desc: "خوادم وقنوات Discord", connected: false, account: "حساب Discord المرتبط",
+          scopes: [["قراءة القنوات", "ask"], ["النشر في القنوات", "ask"]] },
+        { id: "notion", name: "Notion", icon: "file", color: "#3a3a3a", desc: "صفحات وملاحظات مساحة عملك", connected: false, account: "مساحة عمل Notion",
+          scopes: [["قراءة الصفحات", "ask"], ["إنشاء وتعديل الصفحات", "ask"]] },
+        { id: "mcp", name: "خادم MCP مخصص", icon: "grid", color: "#55504a", desc: "أي خادم أدوات عبر بروتوكول MCP", connected: false, account: "", mcp: true,
+          scopes: [["استدعاء أدوات الخادم", "ask"]] }
+      ];
+
+      var permGroups = [
+        { title: "الملفات والطرفية", items: [
+          { id: "read", icon: "folder", name: "قراءة الملفات", desc: "فتح وقراءة ملفات الجهاز", st: "allow" },
+          { id: "write", icon: "file", name: "إنشاء وتعديل الملفات", desc: "كتابة ملفات جديدة أو تعديل الحالية", st: "ask" },
+          { id: "del", icon: "trash", name: "حذف الملفات", desc: "حذف دائم أو نقل إلى سلة المهملات", st: "ask" },
+          { id: "term", icon: "terminal", name: "تنفيذ أوامر الطرفية", desc: "تشغيل أوامر وأدوات سطر الأوامر", st: "ask" },
+          { id: "pkg", icon: "pkg", name: "تثبيت الحزم", desc: "تثبيت مكتبات وبرامج جديدة", st: "deny" }
+        ]},
+        { title: "الشبكة والويب", items: [
+          { id: "search", icon: "globe", name: "البحث على الويب", desc: "البحث وجلب محتوى الصفحات", st: "allow" },
+          { id: "open", icon: "link", name: "فتح الروابط الخارجية", desc: "فتح روابط في المتصفح أو تطبيقات أخرى", st: "ask" },
+          { id: "dl", icon: "download", name: "تنزيل الملفات", desc: "حفظ ملفات من الإنترنت على الجهاز", st: "ask" }
+        ]},
+        { title: "الجهاز", items: [
+          { id: "cam", icon: "camera", name: "الكاميرا", desc: "التقاط صور أو قراءة بث الكاميرا", st: "deny" },
+          { id: "mic", icon: "mic", name: "الميكروفون", desc: "تسجيل الصوت والإدخال الصوتي", st: "ask" },
+          { id: "loc", icon: "pin", name: "الموقع", desc: "قراءة موقعك الحالي", st: "deny" },
+          { id: "notif", icon: "bell", name: "الإشعارات", desc: "إرسال إشعارات وتنبيهات إليك", st: "allow" },
+          { id: "clip", icon: "clipboard", name: "الحافظة", desc: "قراءة وكتابة حافظة النسخ", st: "ask" },
+          { id: "contacts", icon: "user", name: "جهات الاتصال", desc: "قراءة أسماء وأرقام جهات اتصالك", st: "deny" }
+        ]}
+      ];
+      var presets = {
+        strict:   { read: "ask", write: "ask", del: "deny", term: "ask", pkg: "deny", search: "ask", open: "ask", dl: "deny", cam: "deny", mic: "deny", loc: "deny", notif: "ask", clip: "deny", contacts: "deny" },
+        balanced: { read: "allow", write: "ask", del: "ask", term: "ask", pkg: "deny", search: "allow", open: "ask", dl: "ask", cam: "deny", mic: "ask", loc: "deny", notif: "allow", clip: "ask", contacts: "deny" },
+        free:     { read: "allow", write: "allow", del: "ask", term: "allow", pkg: "allow", search: "allow", open: "allow", dl: "allow", cam: "ask", mic: "allow", loc: "ask", notif: "allow", clip: "allow", contacts: "ask" }
+      };
+      var presetNames = { strict: "صارم", balanced: "متوازن", free: "حر", custom: "مخصص" };
+      var presetDescs = {
+        strict: "الوضع الصارم: كل إجراء تقريبًا يحتاج موافقتك، والأخطر ممنوع تمامًا.",
+        balanced: "الوضع المتوازن: القراءة والبحث مسموحان، والكتابة والتنفيذ بعد سؤالك، والحذف والحزم بحذر.",
+        free: "الوضع الحر: المساعد يتصرف باستقلالية شبه كاملة — مناسب لمهام التطوير الطويلة فقط.",
+        custom: "ضبط يدوي: عدّلت صلاحية بنفسك، فصار الوضع مخصصًا."
+      };
+      var curPreset = "balanced";
+      var permLabels = { allow: "اسمح", ask: "اسألني", deny: "امنع" };
+      var permColors = { allow: "#3ecf6e", ask: "#f2b544", deny: "#ff6b5e" };
+
+      var memories = [
+        "يُفضّل الواجهات الداكنة البسيطة — النص أولًا، بلا زحمة ولا عناصر ضخمة.",
+        "يبني محرك ذكاء اصطناعي منافسًا خاصًا به، وهذا التصميم واجهته.",
+        "يخطط لتحويل هذا التصميم إلى تطبيق Android (APK) بعد اعتماد الشكل."
+      ];
+
+      var chats = [
+        { title: "تصميم واجهة الإعدادات", time: "الآن", reply: "الإعدادات الجديدة جاهزة للتجربة: مزوّدون قابلون للتبديل، موصّلات بصلاحيات منفصلة لكل واحد، وثلاثة أوضاع لكل قدرة — اسمح، اسألني، امنع." },
+        { title: "أسئلة عن DeepSeek V4.1", time: "أمس", reply: "نعم — DeepSeek V4.1 Flash يعمل عندك الآن عبر البوابة، وهو مضبوط كأحد المزوّدين في القائمة تگدر تفعّله افتراضيًا متى شئت." },
+        { title: "خطة بناء المحرك", time: "الثلاثاء", reply: "الخطة على ثلاث مراحل: نواة الاستدلال أولًا، ثم طبقة الأدوات والصلاحيات، وأخيرًا الواجهة — وهي ما نرسمه الآن." },
+        { title: "ترجمة مقال تقني", time: "الاثنين", reply: "ترجمت المقال كاملًا مع الحفاظ على المصطلحات الإنجليزية بين قوسين عند أول ورود لها، كما تفضّل." },
+        { title: "أفكار واجهات داكنة", time: "الأحد", reply: "جمعت لك اتجاهين: نصّي صِرف بخلفية سوداء، وآخر ببطاقات خفيفة — الأول أقرب لذوقك بكثير." }
+      ];
+
+      /* =============== toast =============== */
+      var toastTimer = null;
+      function toast(msg) {
+        var t = document.getElementById("toast");
+        t.textContent = msg;
+        t.classList.add("show");
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(function () { t.classList.remove("show"); }, 2300);
+      }
+
+      /* =============== sheets =============== */
+      var overlay = document.getElementById("overlay");
+      var sheet = document.getElementById("sheet");
+      var drawer = document.getElementById("drawer");
+      function openSheet(html) {
+        document.getElementById("sheet-body").innerHTML = html;
+        overlay.classList.add("open");
+        sheet.classList.add("open");
+      }
+      function closeAll() {
+        overlay.classList.remove("open");
+        sheet.classList.remove("open");
+        drawer.classList.remove("open");
+      }
+      overlay.addEventListener("click", closeAll);
+
+      /* =============== navigation =============== */
+      var tabOf = { chat: "chat", providers: "providers", provider: "providers", connectors: "connectors", connector: "connectors", settings: "settings", permissions: "settings", generation: "settings", appearance: "settings", memory: "settings", about: "settings" };
+      function showScreen(id) {
+        var screens = document.querySelectorAll(".screen");
+        for (var i = 0; i < screens.length; i++) screens[i].classList.toggle("active", screens[i].id === "scr-" + id);
+        state.tab = tabOf[id] || "chat";
+        var btns = document.querySelectorAll("#bottomnav button");
+        for (var j = 0; j < btns.length; j++) btns[j].classList.toggle("on", btns[j].getAttribute("data-tab") === state.tab);
+        closeAll();
+      }
+      function buildNav() {
+        var nav = document.getElementById("bottomnav");
+        var items = [
+          ["chat", "msg", "الدردشة"],
+          ["providers", "server", "المزوّدون"],
+          ["connectors", "plug", "الموصّلات"],
+          ["settings", "gear", "الإعدادات"]
+        ];
+        nav.innerHTML = "";
+        items.forEach(function (it) {
+          var b = document.createElement("button");
+          b.setAttribute("data-tab", it[0]);
+          b.innerHTML = ic(it[1]) + "<span>" + it[2] + "</span>";
+          b.addEventListener("click", function () { showScreen(it[0]); });
+          nav.appendChild(b);
+        });
+      }
+
+      /* =============== switches helper =============== */
+      function switchHTML(on) { return '<button class="sw' + (on ? " on" : "") + '" aria-label="مفتاح تبديل"></button>'; }
+
+      /* =============== providers =============== */
+      function activeProvider() {
+        for (var i = 0; i < providers.length; i++) if (providers[i].active) return providers[i];
+        return providers[0];
+      }
+      function renderProviders(filter) {
+        var list = document.getElementById("prov-list");
+        list.innerHTML = "";
+        var any = false;
+        providers.forEach(function (p) {
+          if (filter && p.name.toLowerCase().indexOf(filter.toLowerCase()) === -1 && p.desc.indexOf(filter) === -1) return;
+          any = true;
+          var status = p.active
+            ? '<span class="badge">الافتراضي</span>'
+            : (p.enabled && (p.key || p.local) ? '<span class="dot g"></span>' : '<span class="dot gray"></span>');
+          var sub = p.models.length ? p.desc + " · " + p.models.length + " نماذج" : p.desc;
+          var row = el(
+            '<button class="row">' +
+              '<span class="brand" style="background:' + p.color + '">' + esc(p.mark) + "</span>" +
+              '<span class="grow"><span class="t">' + esc(p.name) + '</span><span class="s">' + esc(sub) + "</span></span>" +
+              status + '<span class="chev">' + ic("chevL") + "</span>" +
+            "</button>"
+          );
+          row.addEventListener("click", function () { openProvider(p.id); });
+          list.appendChild(row);
+        });
+        if (!any) list.innerHTML = '<div class="row static"><span class="grow"><span class="s wrap">لا نتائج مطابقة لبحثك.</span></span></div>';
+      }
+
+      var curProvider = null;
+      function openProvider(id) {
+        for (var i = 0; i < providers.length; i++) if (providers[i].id === id) curProvider = providers[i];
+        renderProviderDetail();
+        showScreen("provider");
+        document.getElementById("pd-scroll").scrollTop = 0;
+      }
+      function renderProviderDetail() {
+        var p = curProvider;
+        if (!p) return;
+        document.getElementById("pd-name").textContent = p.name;
+        document.getElementById("pd-badge").innerHTML = p.active ? '<span class="badge">الافتراضي</span>' : "";
+        var modelsHTML = "";
+        if (p.models.length) {
+          modelsHTML = p.models.map(function (m, idx) {
+            return '<button class="row" data-model="' + idx + '">' +
+              '<span class="radio' + (p.model === idx ? " on" : "") + '"></span>' +
+              '<span class="grow"><span class="t mono">' + esc(m) + "</span></span>" +
+              (p.active && p.model === idx ? '<span class="val">قيد الاستخدام</span>' : "") +
+            "</button>";
+          }).join("");
+        } else {
+          modelsHTML = '<div class="row static"><span class="grow"><span class="s wrap">لا نماذج بعد — اضغط «جلب النماذج» لقراءتها من الخادم.</span></span></div>';
+        }
+        var keyField = p.local
+          ? '<div class="row static"><span class="ic">' + ic("shield") + '</span><span class="grow"><span class="t">بدون مفتاح</span><span class="s">الخدمة المحلية لا تحتاج مفتاح API</span></span></div>'
+          : '<div class="field" style="margin-inline:0;"><label>مفتاح API</label>' +
+            '<div class="inputbox"><input class="ltr" type="password" id="pd-key" value="' + esc(p.keyVal) + '" placeholder="الصق المفتاح هنا" autocomplete="off" />' +
+            '<button class="mini-btn" id="pd-eye" aria-label="إظهار المفتاح">' + ic("eye") + "</button></div>" +
+            '<p class="hint">يُحفظ مشفّرًا على جهازك فقط، ولا يغادره إلا إلى خادم هذا المزوّد.</p></div>';
+        document.getElementById("pd-scroll").innerHTML =
+          '<div class="group"><div class="card">' +
+            '<div class="row static"><span class="brand" style="background:' + p.color + '">' + esc(p.mark) + "</span>" +
+            '<span class="grow"><span class="t">' + esc(p.name) + '</span><span class="s">' + esc(p.desc) + "</span></span>" +
+            switchHTML(p.enabled) + "</div>" +
+          "</div></div>" +
+          '<div class="field"><label>عنوان الخادم (Base URL)</label>' +
+            '<div class="inputbox"><input class="ltr" type="text" id="pd-base" value="' + esc(p.base) + '" autocomplete="off" /></div>' +
+            '<p class="hint">التطبيق يضيف مسار <span class="mono">/chat/completions</span> وحده عند الإرسال — لا تدمجه أنت في العنوان.</p></div>' +
+          '<div class="field">' + keyField + "</div>" +
+          '<div class="group"><div class="group-title">النماذج</div><div class="card" id="pd-models">' + modelsHTML + "</div>" +
+          '<div class="btnrow" style="margin-inline:0;"><button class="btn block" id="pd-fetch">' + ic("refresh") + "جلب النماذج من الخادم</button></div></div>" +
+          '<div class="btnrow"><button class="btn accent block" id="pd-setactive"' + (p.active ? " disabled" : "") + ">" + (p.active ? "هذا هو مزوّدك الافتراضي" : "تعيين كمزوّد افتراضي") + "</button></div>" +
+          (p.builtin ? "" : '<div class="btnrow"><button class="btn danger block" id="pd-delete">' + ic("trash") + "حذف هذا المزوّد</button></div>") +
+          '<div style="height:28px"></div>';
+
+        var sw = document.querySelector("#pd-scroll .sw");
+        sw.addEventListener("click", function () {
+          p.enabled = !p.enabled;
+          sw.classList.toggle("on", p.enabled);
+          toast(p.enabled ? "تم تفعيل " + p.name : "تم إيقاف " + p.name);
+        });
+        document.getElementById("pd-base").addEventListener("change", function (e) { p.base = e.target.value.trim(); toast("تم تحديث عنوان الخادم"); });
+        var keyInput = document.getElementById("pd-key");
+        if (keyInput) {
+          keyInput.addEventListener("change", function (e) {
+            p.keyVal = e.target.value;
+            p.key = e.target.value.length > 0;
+            toast(p.key ? "تم حفظ المفتاح على الجهاز" : "تم مسح المفتاح");
+            renderProviders("");
+          });
+          document.getElementById("pd-eye").addEventListener("click", function () {
+            var show = keyInput.type === "password";
+            keyInput.type = show ? "text" : "password";
+            this.innerHTML = ic(show ? "eyeOff" : "eye");
+          });
+        }
+        var modelBtns = document.querySelectorAll("#pd-models [data-model]");
+        modelBtns.forEach(function (b) {
+          b.addEventListener("click", function () {
+            p.model = parseInt(b.getAttribute("data-model"), 10);
+            renderProviderDetail();
+            updateModelChip();
+            toast("النموذج: " + p.models[p.model]);
+          });
+        });
+        document.getElementById("pd-fetch").addEventListener("click", function () {
+          var btn = this;
+          btn.disabled = true;
+          btn.innerHTML = '<span class="spin dark"></span> جارٍ الاتصال بالخادم…';
+          setTimeout(function () {
+            if (!p.models.length) p.models = p.local ? ["llama3.1-8b", "qwen2.5-7b"] : ["نموذج-١", "نموذج-٢"];
+            if (p.id === "openrouter") p.models = ["deepseek/deepseek-chat", "openai/gpt-4o-mini", "anthropic/claude-sonnet-4"];
+            renderProviderDetail();
+            renderProviders("");
+            toast("تم جلب " + p.models.length + " نماذج من " + p.name);
+          }, 900);
+        });
+        var setBtn = document.getElementById("pd-setactive");
+        if (setBtn) setBtn.addEventListener("click", function () {
+          providers.forEach(function (x) { x.active = false; });
+          p.active = true; p.enabled = true;
+          renderProviderDetail(); renderProviders(""); updateModelChip();
+          toast(p.name + " صار المزوّد الافتراضي");
+        });
+        var delBtn = document.getElementById("pd-delete");
+        if (delBtn) delBtn.addEventListener("click", function () {
+          openConfirm("حذف «" + p.name + "»؟", "سيُحذف عنوانه ومفتاحه من الجهاز.", "حذف", function () {
+            providers = providers.filter(function (x) { return x.id !== p.id; });
+            if (p.active && providers.length) { providers[0].active = true; }
+            renderProviders(""); updateModelChip();
+            showScreen("providers");
+            toast("تم حذف المزوّد");
+          });
+        });
+      }
+
+      /* =============== connectors =============== */
+      function permSegHTML(cur, small) {
+        return '<div class="seg" style="width:100%;">' +
+          ["allow", "ask", "deny"].map(function (v) {
+            return '<button data-v="' + v + '" class="' + (cur === v ? "on" : "") + '"><span class="sdot" style="background:' + permColors[v] + '"></span>' + permLabels[v] + "</button>";
+          }).join("") + "</div>";
+      }
+      function bindSeg(container, get, set) {
+        var btns = container.querySelectorAll("button[data-v]");
+        btns.forEach(function (b) {
+          b.addEventListener("click", function () {
+            set(b.getAttribute("data-v"));
+            btns.forEach(function (x) { x.classList.toggle("on", x === b); });
+          });
+        });
+      }
+      function renderConnectors(filter) {
+        var wrap = document.getElementById("conn-scroll");
+        wrap.innerHTML = "";
+        function section(title, list) {
+          if (!list.length) return;
+          var g = el('<div class="group"><div class="group-title">' + title + '</div><div class="card"></div></div>');
+          var card = g.querySelector(".card");
+          list.forEach(function (c) {
+            var row = el(
+              '<button class="row">' +
+                '<span class="brand" style="background:' + c.color + '">' + ic(c.icon) + "</span>" +
+                '<span class="grow"><span class="t">' + esc(c.name) + '</span><span class="s">' + (c.connected && c.account ? esc(c.account) : esc(c.desc)) + "</span></span>" +
+                '<span class="dot ' + (c.connected ? "g" : "gray") + '"></span>' +
+                '<span class="val">' + (c.connected ? "متصل" : "غير متصل") + "</span>" +
+                '<span class="chev">' + ic("chevL") + "</span>" +
+              "</button>"
+            );
+            row.addEventListener("click", function () { openConnector(c.id); });
+            card.appendChild(row);
+          });
+          wrap.appendChild(g);
+        }
+        var f = (filter || "").toLowerCase();
+        var match = connectors.filter(function (c) { return !f || c.name.toLowerCase().indexOf(f) > -1 || c.desc.indexOf(filter) > -1; });
+        section("متصلة", match.filter(function (c) { return c.connected; }));
+        section("متاحة للربط", match.filter(function (c) { return !c.connected; }));
+        if (!match.length) wrap.innerHTML = '<p class="kbd-note">لا موصّلات مطابقة لبحثك.</p>';
+        var note = el('<p class="kbd-note">كل موصّل له صلاحياته المستقلة — ربط حساب لا يعني وصولًا كاملًا، أنت تحدد حدود كل واحد.</p>');
+        wrap.appendChild(note);
+      }
+
+      var curConnector = null;
+      function openConnector(id) {
+        connectors.forEach(function (c) { if (c.id === id) curConnector = c; });
+        renderConnectorDetail();
+        showScreen("connector");
+        document.getElementById("cd-scroll").scrollTop = 0;
+      }
+      function renderConnectorDetail() {
+        var c = curConnector;
+        if (!c) return;
+        document.getElementById("cd-name").textContent = c.name;
+        var dot = document.getElementById("cd-dot");
+        dot.className = "dot " + (c.connected ? "g" : "gray");
+        var scopesHTML = c.scopes.map(function (s, i) {
+          return '<div class="perm-row"><div class="perm-head" style="margin-bottom:9px;">' +
+            '<span class="grow" style="flex:1;"><span class="t" style="font-size:14.5px;font-weight:600;">' + esc(s[0]) + "</span></span></div>" +
+            '<div data-scope="' + i + '">' + permSegHTML(s[1]) + "</div></div>";
+        }).join("");
+        var mcpField = c.mcp
+          ? '<div class="field"><label>عنوان خادم MCP</label><div class="inputbox"><input class="ltr" type="text" id="cd-mcpurl" placeholder="https://…" autocomplete="off" /></div></div>'
+          : "";
+        document.getElementById("cd-scroll").innerHTML =
+          '<div class="group"><div class="card">' +
+            '<div class="row static"><span class="brand" style="background:' + c.color + '">' + ic(c.icon) + "</span>" +
+            '<span class="grow"><span class="t">' + esc(c.name) + '</span><span class="s wrap">' + esc(c.desc) + "</span></span></div>" +
+            '<div class="row static"><span class="grow"><span class="t">الحالة</span><span class="s">' + (c.connected ? "متصل" + (c.account ? " — " + esc(c.account) : "") : "غير متصل") + '</span></span><span class="dot ' + (c.connected ? "g" : "gray") + '"></span></div>' +
+          "</div></div>" +
+          mcpField +
+          '<div class="group"><div class="group-title">ما يستطيع هذا الموصّل فعله</div><div class="card">' + scopesHTML + "</div>" +
+          '<p class="hint">هذه الحدود تخص ' + esc(c.name) + ' وحده، ولا تتأثر بصلاحيات الموصّلات الأخرى.</p></div>' +
+          '<div class="btnrow"><button class="btn ' + (c.connected ? "danger" : "accent") + ' block" id="cd-toggle">' + (c.connected ? "قطع الاتصال" : "ربط الحساب") + "</button></div>" +
+          '<div style="height:28px"></div>';
+
+        document.querySelectorAll("#cd-scroll [data-scope]").forEach(function (holder) {
+          var idx = parseInt(holder.getAttribute("data-scope"), 10);
+          bindSeg(holder, null, function (v) {
+            c.scopes[idx][1] = v;
+            toast(c.name + ": " + c.scopes[idx][0] + " ← " + permLabels[v]);
+          });
+        });
+        document.getElementById("cd-toggle").addEventListener("click", function () {
+          var btn = this;
+          if (c.connected) {
+            openConfirm("قطع اتصال " + c.name + "؟", "سيتوقف المساعد عن الوصول إلى هذا الحساب فورًا.", "قطع الاتصال", function () {
+              c.connected = false;
+              renderConnectorDetail(); renderConnectors("");
+              toast("تم قطع اتصال " + c.name);
+            });
+          } else {
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spin"></span> جارٍ فتح صفحة الربط الآمن…';
+            setTimeout(function () {
+              c.connected = true;
+              renderConnectorDetail(); renderConnectors("");
+              toast("تم ربط " + c.name + " بنجاح");
+            }, 1000);
+          }
+        });
+      }
+
+      /* =============== settings hub =============== */
+      function hubRow(iconName, title, sub, target) {
+        var b = el('<button class="row"><span class="ic">' + ic(iconName) + '</span><span class="grow"><span class="t">' + title + '</span>' + (sub ? '<span class="s">' + sub + "</span>" : "") + '</span><span class="chev">' + ic("chevL") + "</span></button>");
+        b.addEventListener("click", function () { showScreen(target); });
+        return b;
+      }
+      function buildHub() {
+        var conn = document.getElementById("hub-conn");
+        conn.appendChild(hubRow("server", "المزوّدون", "الافتراضي الآن: " + activeProvider().name, "providers"));
+        conn.appendChild(hubRow("plug", "الموصّلات", connectors.filter(function (c) { return c.connected; }).length + " متصلة من " + connectors.length, "connectors"));
+        var ctrl = document.getElementById("hub-ctrl");
+        ctrl.appendChild(hubRow("shield", "الصلاحيات", "الوضع الحالي: " + presetNames[curPreset], "permissions"));
+        ctrl.appendChild(hubRow("sliders", "التوليد والنماذج", "التفكير: " + thinkName(state.thinking) + " · حرارة " + state.temperature, "generation"));
+        var app = document.getElementById("hub-app");
+        app.appendChild(hubRow("palette", "المظهر", "السمة ولون التمييز وحجم الخط", "appearance"));
+        app.appendChild(hubRow("db", "الذاكرة والبيانات", memories.length + " ذكريات محفوظة", "memory"));
+        app.appendChild(hubRow("info", "حول التطبيق", "الإصدار والتراخيص", "about"));
+      }
+      function refreshHub() {
+        document.getElementById("hub-conn").innerHTML = "";
+        document.getElementById("hub-ctrl").innerHTML = "";
+        document.getElementById("hub-app").innerHTML = "";
+        buildHub();
+      }
+
+      /* =============== permissions =============== */
+      function permItem(id) {
+        for (var g = 0; g < permGroups.length; g++)
+          for (var i = 0; i < permGroups[g].items.length; i++)
+            if (permGroups[g].items[i].id === id) return permGroups[g].items[i];
+        return null;
+      }
+      function renderPermissions() {
+        var wrap = document.getElementById("perm-groups");
+        wrap.innerHTML = "";
+        permGroups.forEach(function (g) {
+          var grp = el('<div class="group"><div class="group-title">' + g.title + '</div><div class="card"></div></div>');
+          var card = grp.querySelector(".card");
+          g.items.forEach(function (it) {
+            var row = el(
+              '<div class="perm-row"><div class="perm-head">' +
+                '<span class="ic">' + ic(it.icon) + "</span>" +
+                '<span style="flex:1;min-width:0;"><span class="t">' + it.name + '</span><span class="s" style="display:block;">' + it.desc + "</span></span>" +
+              "</div>" + permSegHTML(it.st) + "</div>"
+            );
+            bindSeg(row, null, function (v) {
+              it.st = v;
+              setPreset("custom", true);
+              toast(it.name + " ← " + permLabels[v]);
+            });
+            card.appendChild(row);
+          });
+          wrap.appendChild(grp);
+        });
+        markPreset();
+      }
+      function markPreset() {
+        var btns = document.querySelectorAll("#perm-preset button");
+        btns.forEach(function (b) { b.classList.toggle("on", b.getAttribute("data-preset") === curPreset); });
+        document.getElementById("preset-hint").textContent = presetDescs[curPreset];
+      }
+      function setPreset(name, silent) {
+        curPreset = name;
+        if (presets[name]) {
+          var map = presets[name];
+          Object.keys(map).forEach(function (k) { var it = permItem(k); if (it) it.st = map[k]; });
+          renderPermissions();
+          if (!silent) toast("تم تطبيق الوضع " + presetNames[name]);
+        }
+        markPreset();
+        refreshHub();
+      }
+      document.querySelectorAll("#perm-preset button").forEach(function (b) {
+        b.addEventListener("click", function () { setPreset(b.getAttribute("data-preset")); });
+      });
+
+      /* =============== generic confirm sheet =============== */
+      function openConfirm(title, sub, actionLabel, onOk) {
+        openSheet(
+          "<h3>" + esc(title) + '</h3><p class="sub">' + esc(sub) + "</p>" +
+          '<div class="btnrow" style="margin:14px 0 0;"><button class="btn" id="cf-no">إلغاء</button>' +
+          '<button class="btn accent" id="cf-yes">' + esc(actionLabel) + "</button></div>"
+        );
+        document.getElementById("cf-no").addEventListener("click", closeAll);
+        document.getElementById("cf-yes").addEventListener("click", function () { closeAll(); onOk(); });
+      }
+
+      /* =============== permission request demo =============== */
+      document.getElementById("btn-perm-demo").innerHTML = ic("terminal") + "معاينة: كيف يطلب المساعد الإذن؟";
+      document.getElementById("btn-perm-demo").addEventListener("click", function () {
+        openSheet(
+          '<div style="display:flex;align-items:center;gap:12px;"><span class="ic" style="width:40px;height:40px;border-radius:12px;background:var(--surface2);display:grid;place-items:center;">' + ic("terminal") + '</span>' +
+          '<div><h3 style="margin:0;">طلب إذن — تنفيذ أمر</h3><p class="sub" style="margin:2px 0 0;">يريد المساعد تشغيل هذا الأمر في الطرفية:</p></div></div>' +
+          '<div class="cmd">npm run build && ls dist/</div>' +
+          '<p class="sub">صلاحية «تنفيذ أوامر الطرفية» مضبوطة عندك على «اسألني»، لذلك توقّف هنا.</p>' +
+          '<div style="display:flex;flex-direction:column;gap:9px;margin-top:12px;">' +
+          '<button class="btn accent block" id="pm-once">السماح مرة واحدة</button>' +
+          '<button class="btn block" id="pm-always">السماح دائمًا لهذه الصلاحية</button>' +
+          '<button class="btn danger block" id="pm-no">رفض</button></div>'
+        );
+        document.getElementById("pm-once").addEventListener("click", function () { closeAll(); toast("تم تنفيذ الأمر — لهذه المرة فقط"); });
+        document.getElementById("pm-always").addEventListener("click", function () {
+          permItem("term").st = "allow";
+          setPreset("custom", true);
+          renderPermissions();
+          closeAll();
+          toast("أوامر الطرفية صارت «اسمح» دائمًا");
+        });
+        document.getElementById("pm-no").addEventListener("click", function () { closeAll(); toast("تم رفض الطلب"); });
+      });
+
+      /* =============== generation screen =============== */
+      function thinkName(v) { return { low: "منخفض", medium: "متوسط", high: "عالٍ" }[v] || v; }
+      function renderGeneration() {
+        var p = activeProvider();
+        document.getElementById("gen-scroll").innerHTML =
+          '<div class="group"><div class="group-title">النموذج الافتراضي</div><div class="card">' +
+            '<button class="row" id="gen-model"><span class="brand" style="background:' + p.color + '">' + esc(p.mark) + '</span>' +
+            '<span class="grow"><span class="t mono">' + esc(p.models[p.model] || "—") + '</span><span class="s">' + esc(p.name) + '</span></span><span class="chev">' + ic("chevL") + "</span></button>" +
+          "</div></div>" +
+          '<div class="group"><div class="group-title">التفكير</div><div class="card">' +
+            '<div class="perm-row"><div class="perm-head"><span class="ic">' + ic("bulb") + '</span><span style="flex:1;"><span class="t">مستوى التفكير</span><span class="s" style="display:block;">عمق الاستدلال قبل الإجابة</span></span></div>' +
+            '<div class="seg" id="gen-think" style="width:100%;">' +
+              ["low", "medium", "high"].map(function (v) { return '<button data-v="' + v + '" class="' + (state.thinking === v ? "on" : "") + '">' + thinkName(v) + "</button>"; }).join("") +
+            "</div></div>" +
+            '<div class="row static"><span class="grow"><span class="t">إظهار عملية التفكير</span><span class="s">عرض خطوات الاستدلال قابلة للطي داخل الدردشة</span></span><span data-sw="showThinking">' + switchHTML(state.showThinking) + "</span></div>" +
+          "</div></div>" +
+          '<div class="group"><div class="group-title">معاملات التوليد</div><div class="card">' +
+            '<div class="row static" style="padding-bottom:2px;"><span class="grow"><span class="t">درجة الحرارة</span><span class="s">أعلى = إجابات أجرأ وأقل توقعًا</span></span><span class="val" id="gen-temp-val">' + state.temperature.toFixed(1) + "</span></div>" +
+            '<div class="slider-wrap"><input type="range" id="gen-temp" min="0" max="2" step="0.1" value="' + state.temperature + '" /></div>' +
+            '<div class="perm-row"><div class="perm-head"><span style="flex:1;"><span class="t">الحد الأقصى لرموز الرد</span></span></div>' +
+            '<div class="seg" id="gen-max" style="width:100%;">' +
+              ["2K", "4K", "8K", "16K", "32K"].map(function (v) { return '<button data-v="' + v + '" class="' + (state.maxTokens === v ? "on" : "") + '">' + v + "</button>"; }).join("") +
+            "</div></div>" +
+            '<div class="row static"><span class="grow"><span class="t">البثّ المباشر</span><span class="s">ظهور الرد كلمة كلمة أثناء توليده</span></span><span data-sw="streaming">' + switchHTML(state.streaming) + "</span></div>" +
+          "</div></div>" +
+          '<div class="field"><label>موجّه النظام (System Prompt)</label>' +
+            '<div class="inputbox"><textarea id="gen-sysprompt" rows="4">' + esc(state.systemPrompt) + "</textarea></div>" +
+            '<p class="hint">تعليمات ثابتة تسبق كل محادثة جديدة.</p></div>' +
+          '<div class="group"><div class="card">' +
+            '<div class="row static"><span class="grow"><span class="t">حفظ الدردشات تلقائيًا</span><span class="s">إبقاء سجل المحادثات على الجهاز</span></span><span data-sw="autosave">' + switchHTML(state.autosave) + "</span></div>" +
+          "</div></div>" +
+          '<div style="height:28px"></div>';
+
+        document.getElementById("gen-model").addEventListener("click", openModelSheet);
+        bindSeg(document.getElementById("gen-think"), null, function (v) {
+          state.thinking = v; updateThinkChip(); refreshHub();
+          toast("مستوى التفكير: " + thinkName(v));
+        });
+        bindSeg(document.getElementById("gen-max"), null, function (v) { state.maxTokens = v; toast("الحد الأقصى: " + v + " رمز"); });
+        document.getElementById("gen-temp").addEventListener("input", function (e) {
+          state.temperature = parseFloat(e.target.value);
+          document.getElementById("gen-temp-val").textContent = state.temperature.toFixed(1);
+        });
+        document.getElementById("gen-temp").addEventListener("change", refreshHub);
+        document.getElementById("gen-sysprompt").addEventListener("change", function (e) { state.systemPrompt = e.target.value; toast("تم تحديث موجّه النظام"); });
+        bindStateSwitches(document.getElementById("gen-scroll"));
+      }
+      function bindStateSwitches(root) {
+        root.querySelectorAll("[data-sw]").forEach(function (holder) {
+          var key = holder.getAttribute("data-sw");
+          var sw = holder.querySelector(".sw");
+          if (!sw) return;
+          sw.addEventListener("click", function () {
+            state[key] = !state[key];
+            sw.classList.toggle("on", state[key]);
+            onStateChange(key);
+          });
+        });
+      }
+      function onStateChange(key) {
+        if (key === "showToks") document.getElementById("toks").style.display = state.showToks ? "" : "none";
+        if (key === "reduceMotion") document.getElementById("app").classList.toggle("noanim", state.reduceMotion);
+        if (key === "memoryOn") renderMemory();
+      }
+
+      /* =============== appearance screen =============== */
+      var accents = [
+        ["#ff5a4d", "مرجاني"], ["#4d8dff", "أزرق"], ["#2fbf71", "أخضر"], ["#e8a93c", "ذهبي"], ["#ff6b9d", "وردي"]
+      ];
+      var curAccent = "#ff5a4d";
+      var curTheme = "dark";
+      function renderAppearance() {
+        document.getElementById("app-scroll").innerHTML =
+          '<div class="group"><div class="group-title">السمة</div><div class="card"><div class="perm-row">' +
+            '<div class="seg" id="ap-theme" style="width:100%;">' +
+              [["dark", "داكن"], ["light", "فاتح"], ["system", "تلقائي"]].map(function (t) { return '<button data-v="' + t[0] + '" class="' + (curTheme === t[0] ? "on" : "") + '">' + t[1] + "</button>"; }).join("") +
+            "</div>" +
+            '<p class="hint" style="margin-inline:0;">«تلقائي» يتبع إعداد نظام جهازك.</p>' +
+          "</div></div></div>" +
+          '<div class="group"><div class="group-title">لون التمييز</div><div class="card">' +
+            '<div class="row static" style="padding-bottom:0;"><span class="grow"><span class="t">اللون الوحيد الملوّن في الواجهة</span><span class="s">أزرار الإرسال والإيقاف والمفاتيح الفعّالة</span></span></div>' +
+            '<div class="swatches">' + accents.map(function (a) {
+              return '<button class="swatch' + (curAccent === a[0] ? " on" : "") + '" data-accent="' + a[0] + '" style="background:' + a[0] + '" aria-label="' + a[1] + '"></button>';
+            }).join("") + "</div>" +
+          "</div></div>" +
+          '<div class="group"><div class="group-title">الدردشة</div><div class="card">' +
+            '<div class="row static" style="padding-bottom:2px;"><span class="grow"><span class="t">حجم خط الردود</span></span><span class="val" id="ap-fs-val">' + document.getElementById("app").style.getPropertyValue("--chat-fs") + "</span></div>" +
+            '<div class="slider-wrap"><input type="range" id="ap-fs" min="15" max="20" step="0.5" value="16.5" /></div>' +
+            '<div class="row static"><span class="grow"><span class="t">عدّاد السرعة (tok/s)</span><span class="s">إظهار سرعة التوليد في الشريط العلوي</span></span><span data-sw="showToks">' + switchHTML(state.showToks) + "</span></div>" +
+            '<div class="row static"><span class="grow"><span class="t">فقاعات لرسائلي</span><span class="s">إيقافها يجعل رسائلك نصًا عاديًا مثل الردود</span></span><span data-sw="userBubble">' + switchHTML(state.userBubble) + "</span></div>" +
+            '<div class="row static"><span class="grow"><span class="t">تقليل الحركة</span><span class="s">إيقاف الحركات الانتقالية في الواجهة</span></span><span data-sw="reduceMotion">' + switchHTML(state.reduceMotion) + "</span></div>" +
+          "</div></div>" +
+          '<div style="height:28px"></div>';
+
+        bindSeg(document.getElementById("ap-theme"), null, function (v) { setTheme(v); });
+        document.querySelectorAll("[data-accent]").forEach(function (s) {
+          s.addEventListener("click", function () {
+            curAccent = s.getAttribute("data-accent");
+            document.getElementById("app").style.setProperty("--accent", curAccent);
+            document.querySelectorAll("[data-accent]").forEach(function (x) { x.classList.toggle("on", x === s); });
+            toast("لون التمييز: " + s.getAttribute("aria-label"));
+          });
+        });
+        var fs = document.getElementById("ap-fs");
+        document.getElementById("ap-fs-val").textContent = fs.value + "px";
+        fs.addEventListener("input", function () {
+          document.getElementById("app").style.setProperty("--chat-fs", fs.value + "px");
+          document.getElementById("ap-fs-val").textContent = fs.value + "px";
+        });
+        bindStateSwitches(document.getElementById("app-scroll"));
+      }
+      function setTheme(v) {
+        curTheme = v;
+        var dark = v === "dark" || (v === "system" && window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches);
+        document.getElementById("app").setAttribute("data-theme", dark ? "dark" : "light");
+        var btns = document.querySelectorAll("#ap-theme button");
+        btns.forEach(function (b) { b.classList.toggle("on", b.getAttribute("data-v") === v); });
+      }
+
+      /* =============== memory & data =============== */
+      function renderMemory() {
+        var list = memories.map(function (m, i) {
+          return '<div class="row static"><span class="ic">' + ic("bulb") + '</span><span class="grow"><span class="s wrap" style="font-size:13.5px;color:var(--text);">' + esc(m) + '</span></span>' +
+            '<button class="mini-btn" data-del-mem="' + i + '" aria-label="حذف" style="border:0;background:none;color:var(--faint);cursor:pointer;display:grid;place-items:center;padding:4px;">' + ic("x") + "</button></div>";
+        }).join("");
+        document.getElementById("mem-scroll").innerHTML =
+          '<div class="group"><div class="card">' +
+            '<div class="row static"><span class="ic">' + ic("db") + '</span><span class="grow"><span class="t">ذاكرة المساعد</span><span class="s">يتذكّر تفضيلاتك وسياقك بين المحادثات</span></span><span data-sw="memoryOn">' + switchHTML(state.memoryOn) + "</span></div>" +
+          "</div></div>" +
+          '<div class="group" style="opacity:' + (state.memoryOn ? "1" : ".45") + ';pointer-events:' + (state.memoryOn ? "auto" : "none") + ';"><div class="group-title">ذكريات محفوظة (' + memories.length + ')</div><div class="card">' +
+            (list || '<div class="row static"><span class="grow"><span class="s wrap">لا ذكريات بعد.</span></span></div>') +
+          '</div><div class="btnrow" style="margin-inline:0;"><button class="btn block" id="mem-add">' + ic("plus") + "إضافة ذكرى يدويًا</button></div></div>" +
+          '<div class="group"><div class="group-title">بياناتك</div><div class="card">' +
+            '<button class="row" id="mem-export"><span class="ic">' + ic("download") + '</span><span class="grow"><span class="t">تصدير كل الإعدادات</span><span class="s">تنزيل ملف JSON يشمل المزوّدين والصلاحيات والتفضيلات (بدون مفاتيح كاملة)</span></span></button>' +
+            '<button class="row" id="mem-wipe"><span class="ic" style="color:var(--red);">' + ic("trash") + '</span><span class="grow"><span class="t" style="color:var(--red);">مسح كل البيانات</span><span class="s">الدردشات والذكريات والمفاتيح — لا يمكن التراجع</span></span></button>' +
+          "</div></div>" +
+          '<div style="height:28px"></div>';
+
+        bindStateSwitches(document.getElementById("mem-scroll"));
+        document.querySelectorAll("[data-del-mem]").forEach(function (b) {
+          b.addEventListener("click", function () {
+            memories.splice(parseInt(b.getAttribute("data-del-mem"), 10), 1);
+            renderMemory(); refreshHub();
+            toast("تم حذف الذكرى");
+          });
+        });
+        document.getElementById("mem-add").addEventListener("click", function () {
+          openSheet(
+            "<h3>ذكرى جديدة</h3><p class=\"sub\">اكتب حقيقة أو تفضيلًا تريد أن يتذكّره المساعد دائمًا.</p>" +
+            '<div class="inputbox"><textarea id="mem-text" rows="3" placeholder="مثال: أفضّل الردود المختصرة بالنقاط…"></textarea></div>' +
+            '<div class="btnrow" style="margin:14px 0 0;"><button class="btn" id="mem-cancel">إلغاء</button><button class="btn accent" id="mem-save">حفظ الذكرى</button></div>'
+          );
+          document.getElementById("mem-cancel").addEventListener("click", closeAll);
+          document.getElementById("mem-save").addEventListener("click", function () {
+            var v = document.getElementById("mem-text").value.trim();
+            if (!v) { toast("اكتب نص الذكرى أولًا"); return; }
+            memories.push(v);
+            closeAll(); renderMemory(); refreshHub();
+            toast("تم حفظ الذكرى");
+          });
+        });
+        document.getElementById("mem-export").addEventListener("click", function () {
+          var data = {
+            exported: "App Design — إعدادات",
+            activeProvider: activeProvider().name,
+            model: (activeProvider().models[activeProvider().model] || null),
+            thinking: state.thinking, temperature: state.temperature, maxTokens: state.maxTokens,
+            preset: curPreset,
+            permissions: {}, connectors: {}, memories: memories.slice()
+          };
+          permGroups.forEach(function (g) { g.items.forEach(function (it) { data.permissions[it.name] = permLabels[it.st]; }); });
+          connectors.forEach(function (c) { data.connectors[c.name] = c.connected ? "متصل" : "غير متصل"; });
+          var blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+          var a = document.createElement("a");
+          a.href = URL.createObjectURL(blob);
+          a.download = "app-settings.json";
+          document.body.appendChild(a); a.click(); a.remove();
+          setTimeout(function () { URL.revokeObjectURL(a.href); }, 2000);
+          toast("تم تنزيل ملف الإعدادات");
+        });
+        document.getElementById("mem-wipe").addEventListener("click", function () {
+          openConfirm("مسح كل البيانات؟", "ستفقد الدردشات والذكريات ومفاتيح المزوّدين المضبوطة في هذا النموذج.", "مسح الكل", function () {
+            memories = [];
+            renderMemory(); refreshHub();
+            resetChat();
+            toast("تم مسح كل البيانات");
+          });
+        });
+      }
+
+      /* =============== about =============== */
+      function renderAbout() {
+        document.getElementById("about-scroll").innerHTML =
+          '<div class="group"><div class="card">' +
+            '<div class="row static"><span class="grow"><span class="t">إصدار التصميم</span></span><span class="val">0.1.0</span></div>' +
+            '<div class="row static"><span class="grow"><span class="t">الحالة</span></span><span class="val">نموذج واجهة تفاعلي</span></div>' +
+            '<div class="row static"><span class="grow"><span class="t">الخطوة التالية</span></span><span class="val">التحويل إلى APK</span></div>' +
+          "</div></div>" +
+          '<div class="group"><div class="group-title">فلسفة التصميم</div><div class="card">' +
+            '<div class="row static"><span class="grow"><span class="s wrap" style="font-size:13.5px;line-height:1.9;">النص أولًا، والواجهة تختفي. خلفية سوداء صافية، شريط علوي نحيف، لون تمييز واحد، وكل صلاحية وقدرة تحت تحكمك المباشر — بلا جدران كود ولا عناصر ضخمة.</span></span></div>' +
+          "</div></div>" +
+          '<div style="height:28px"></div>';
+      }
+
+      /* =============== add provider =============== */
+      document.getElementById("btn-add-provider").innerHTML = ic("plus") + "إضافة مزوّد مخصص";
+      document.getElementById("btn-add-provider").addEventListener("click", function () {
+        openSheet(
+          "<h3>مزوّد مخصص جديد</h3><p class=\"sub\">أي خدمة متوافقة مع واجهة OpenAI تصلح — عنوان ومفتاح فقط.</p>" +
+          '<div class="field" style="margin:10px 0 0;"><label>الاسم</label><div class="inputbox"><input id="np-name" type="text" placeholder="مثال: خادمي الخاص" /></div></div>' +
+          '<div class="field" style="margin:12px 0 0;"><label>عنوان الخادم (Base URL)</label><div class="inputbox"><input class="ltr" id="np-base" type="text" placeholder="https://…" /></div></div>' +
+          '<div class="field" style="margin:12px 0 0;"><label>مفتاح API</label><div class="inputbox"><input class="ltr" id="np-key" type="password" placeholder="sk-…" /></div></div>' +
+          '<div class="btnrow" style="margin:16px 0 0;"><button class="btn" id="np-cancel">إلغاء</button><button class="btn accent" id="np-save">إضافة المزوّد</button></div>'
+        );
+        document.getElementById("np-cancel").addEventListener("click", closeAll);
+        document.getElementById("np-save").addEventListener("click", function () {
+          var name = document.getElementById("np-name").value.trim();
+          var base = document.getElementById("np-base").value.trim();
+          var key = document.getElementById("np-key").value.trim();
+          if (!name || !base) { toast("الاسم والعنوان مطلوبان"); return; }
+          providers.push({
+            id: "custom" + Date.now(), name: name, mark: name.slice(0, 1).toUpperCase(), color: "#3f3f3f",
+            desc: "مزوّد مخصص أضفته بنفسك", base: base, key: key.length > 0, keyVal: key,
+            enabled: true, active: false, builtin: false, models: [], model: 0
+          });
+          closeAll(); renderProviders("");
+          toast("تمت إضافة «" + name + "»");
+        });
+      });
+
+      /* =============== model & thinking sheets =============== */
+      function updateModelChip() {
+        var p = activeProvider();
+        document.getElementById("chip-model").innerHTML = ic("cpu") + '<span class="nm">' + esc(p.models[p.model] || p.name) + '</span><span class="chevdn">' + ic("chevD") + "</span>";
+      }
+      function updateThinkChip() {
+        document.getElementById("chip-think").innerHTML = ic("bulb") + "<span>Thinking: <b>" + state.thinking + '</b></span><span class="chevdn">' + ic("chevR") + "</span>";
+      }
+      function openModelSheet() {
+        var html = "<h3>اختيار النموذج</h3><p class=\"sub\">كل مزوّد مفعّل ونماذجه — التبديل فوري وبدون إعادة تشغيل.</p>";
+        providers.forEach(function (p) {
+          if (!p.enabled || !p.models.length) return;
+          html += '<p class="group-title" style="margin:14px 2px 4px;">' + esc(p.name) + (p.active ? ' · <span style="color:var(--accent)">الافتراضي</span>' : "") + "</p>";
+          p.models.forEach(function (m, idx) {
+            var on = p.active && p.model === idx;
+            html += '<button class="opt" data-p="' + p.id + '" data-m="' + idx + '"><span class="grow"><span class="mono">' + esc(m) + '</span></span>' + (on ? '<span class="check">' + ic("check") + "</span>" : "") + "</button>";
+          });
+        });
+        html += '<button class="opt" id="ms-manage"><span class="grow">إدارة المزوّدين<span class="s">إضافة مفاتيح، جلب نماذج، تغيير الافتراضي</span></span><span class="chev">' + ic("chevL") + "</span></button>";
+        openSheet(html);
+        document.querySelectorAll("#sheet-body [data-p]").forEach(function (b) {
+          b.addEventListener("click", function () {
+            var pid = b.getAttribute("data-p");
+            providers.forEach(function (x) { x.active = x.id === pid; });
+            var p = activeProvider();
+            p.model = parseInt(b.getAttribute("data-m"), 10);
+            closeAll(); updateModelChip(); renderProviders(""); refreshHub();
+            toast("النموذج الآن: " + p.models[p.model]);
+          });
+        });
+        document.getElementById("ms-manage").addEventListener("click", function () { showScreen("providers"); });
+      }
+      function openThinkSheet() {
+        var opts = [
+          ["low", "منخفض", "ردود أسرع، استدلال أخف — للأسئلة اليومية"],
+          ["medium", "متوسط", "توازن بين السرعة والعمق"],
+          ["high", "عالٍ", "أعمق استدلال — للمسائل الصعبة والبرمجة"]
+        ];
+        var html = "<h3>مستوى التفكير</h3><p class=\"sub\">يُحفظ اختيارك ويظهر دائمًا تحت شريط الإدخال.</p>";
+        opts.forEach(function (o) {
+          html += '<button class="opt" data-think="' + o[0] + '"><span class="grow">' + o[1] + '<span class="s">' + o[2] + "</span></span>" + (state.thinking === o[0] ? '<span class="check">' + ic("check") + "</span>" : "") + "</button>";
+        });
+        openSheet(html);
+        document.querySelectorAll("#sheet-body [data-think]").forEach(function (b) {
+          b.addEventListener("click", function () {
+            state.thinking = b.getAttribute("data-think");
+            closeAll(); updateThinkChip(); refreshHub();
+          });
+        });
+      }
+      document.getElementById("chip-model").addEventListener("click", openModelSheet);
+      document.getElementById("chip-think").addEventListener("click", openThinkSheet);
+      document.getElementById("chip-usage").innerHTML = ic("usage") + "<span>الاستخدام</span>";
+      document.getElementById("chip-usage").addEventListener("click", openUsage);
+
+      /* =============== context sheet =============== */
+      document.getElementById("btn-context").addEventListener("click", function () {
+        openSheet(
+          "<h3>سياق هذه الدردشة</h3><p class=\"sub\">ما يستطيع المساعد استعماله داخل هذه المحادثة فقط.</p>" +
+          '<div class="card" style="margin-top:10px;">' +
+            '<div class="row static"><span class="ic">' + ic("db") + '</span><span class="grow"><span class="t">الذاكرة</span><span class="s">تفضيلاتك المحفوظة عبر المحادثات</span></span><span data-sw="ctxMemory">' + switchHTML(state.ctxMemory) + "</span></div>" +
+            '<div class="row static"><span class="ic">' + ic("globe") + '</span><span class="grow"><span class="t">بحث الويب</span><span class="s">جلب معلومات حديثة عند الحاجة</span></span><span data-sw="webSearch">' + switchHTML(state.webSearch) + "</span></div>" +
+            '<div class="row static"><span class="ic">' + ic("folder") + '</span><span class="grow"><span class="t">ملفات المشروع</span><span class="s">حسب صلاحية «قراءة الملفات»: ' + permLabels[permItem("read").st] + "</span></span></div>" +
+          "</div>" +
+          '<p class="hint">لتغيير الصلاحيات نفسها افتح: الإعدادات ← الصلاحيات.</p>'
+        );
+        bindStateSwitches(document.getElementById("sheet-body"));
+        syncTopToggles();
+      });
+      function syncTopToggles() {
+        document.getElementById("tgl-web").classList.toggle("on", state.webSearch);
+      }
+
+      /* =============== chat =============== */
+      var chatScroll = document.getElementById("chat-scroll");
+      var chatInput = document.getElementById("chat-input");
+      var sendBtn = document.getElementById("btn-send");
+      var streaming = null;
+
+      function fmtReply(text) {
+        var lines = text.split("\n");
+        var html = "", inList = false;
+        function inline(s) {
+          return esc(s).replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>").replace(/«([^»]+)»/g, "«$1»");
+        }
+        lines.forEach(function (ln) {
+          if (ln.indexOf("## ") === 0) {
+            if (inList) { html += "</ul>"; inList = false; }
+            html += "<h3>" + inline(ln.slice(3)) + "</h3>";
+          } else if (ln.indexOf("- ") === 0) {
+            if (!inList) { html += "<ul>"; inList = true; }
+            html += "<li>" + inline(ln.slice(2)) + "</li>";
+          } else if (ln.trim() === "") {
+            if (inList) { html += "</ul>"; inList = false; }
+          } else {
+            if (inList) { html += "</ul>"; inList = false; }
+            html += "<p>" + inline(ln) + "</p>";
+          }
+        });
+        if (inList) html += "</ul>";
+        return html;
+      }
+
+      var mainReply =
+        "كل شيء تقريبًا — الإعدادات مصمّمة لتكون بين يديك، لا مدفونة في قوائم:\n" +
+        "## المزوّدون والنماذج\n" +
+        "- **تبديل فوري** بين DeepSeek وOpenAI وClaude أو أي مزوّد مخصص تضيفه بعنوانه ومفتاحه.\n" +
+        "- **جلب النماذج** من الخادم نفسه، فلا تكتب أسماءها يدويًا ولا تخمّن.\n" +
+        "## الصلاحيات\n" +
+        "- كل قدرة — قراءة الملفات، الطرفية، الكاميرا، الموقع — لها ثلاثة أوضاع: **اسمح، اسألني، امنع**.\n" +
+        "- وضع **اسألني** يعني أن لا شيء يُنفَّذ قبل موافقتك، مرة واحدة أو دائمًا.\n" +
+        "## الموصّلات\n" +
+        "- GitHub وDrive وGmail وغيرها تربطها بحسابك، ولكل موصّل **صلاحياته المستقلة** — ربط الحساب لا يعني وصولًا كاملًا.\n" +
+        "افتح تبويب «الإعدادات» بالأسفل وجرّب بنفسك — كل مفتاح وزر يعمل.";
+
+      var followReply =
+        "تمام. وإذا أردت التعمق أكثر:\n" +
+        "- من **الإعدادات ← الصلاحيات** جرّب زر «معاينة طلب الإذن» لترى كيف يقف المساعد قبل تنفيذ أي أمر.\n" +
+        "- من **المزوّدون** افتح أي مزوّد لتغيير عنوانه أو مفتاحه أو نموذجه الافتراضي.\n" +
+        "- من **الموصّلات ← GitHub** بدّل صلاحية «حذف المستودعات» ولاحظ أنها لا تؤثر على أي موصّل آخر.";
+
+      var replyCount = 0;
+      /* =============== usage (real measurement only) ===============
+         Demo mode: counts measured locally from text the user actually sent
+         and text the assistant actually rendered. Cache does not exist in
+         demo mode, so cached stays 0 until a real API is wired.
+         API mode: call applyApiUsage(usage) once per response with the
+         response's `usage` object (OpenAI-style fields + DeepSeek cache
+         fields: prompt_cache_hit_tokens / prompt_tokens_details.cached_tokens).
+         When API mode is active, the demo counting below must be bypassed so
+         nothing is double-counted. Nothing here is random or fabricated. */
+      var usageStats = { prompt: 0, completion: 0, cached: 0, api: false };
+      function applyApiUsage(u) {
+        if (!u) return;
+        var p = (typeof u.prompt_tokens === "number") ? u.prompt_tokens : 0;
+        var c = (typeof u.completion_tokens === "number") ? u.completion_tokens : 0;
+        var cached = 0;
+        if (typeof u.prompt_cache_hit_tokens === "number") cached = u.prompt_cache_hit_tokens;
+        else if (u.prompt_tokens_details && typeof u.prompt_tokens_details.cached_tokens === "number") cached = u.prompt_tokens_details.cached_tokens;
+        usageStats.prompt += p;
+        usageStats.completion += c;
+        usageStats.cached += cached;
+        usageStats.api = true;
+      }
+      function usageCachePct() {
+        if (!usageStats.prompt) return null;
+        return Math.round((usageStats.cached / usageStats.prompt) * 100);
+      }
+      function fmtNum(n) { return String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ","); }
+      function fmtSize(bytes) {
+        if (bytes === null || bytes === undefined) return "";
+        if (bytes < 1024) return bytes + " بايت";
+        if (bytes < 1048576) return (bytes / 1024).toFixed(1) + " ك.ب";
+        return (bytes / 1048576).toFixed(1) + " م.ب";
+      }
+      function openUsage() {
+        var pct = usageCachePct();
+        var src = usageStats.api
+          ? "المصدر: كائن usage من استجابات الـAPI الفعلية."
+          : "المصدر: عدّ محلي من النصوص المرسلة والمتدفقة فعليًا (وضع تجريبي) — الكاش لا يوجد في الوضع التجريبي، ويظهر هنا عند الربط بـAPI.";
+        var html = "<h3>الاستخدام</h3><p class=\"sub\">" + src + "</p>" +
+          '<div class="group"><div class="card">' +
+          '<div class="perm-row"><span class="grow"><span class="t">توكنز الداخل (Prompt)</span><span class="s" style="display:block;">ما أرسلته أنت من نصوص</span></span><b class="mono" dir="ltr">' + fmtNum(usageStats.prompt) + "</b></div>" +
+          '<div class="perm-row"><span class="grow"><span class="t">توكنز الخارج (Completion)</span><span class="s" style="display:block;">ما ولّده المساعد فعليًا</span></span><b class="mono" dir="ltr">' + fmtNum(usageStats.completion) + "</b></div>" +
+          '<div class="perm-row"><span class="grow"><span class="t">توكنز الكاش (Cached)</span><span class="s" style="display:block;">من الداخل أُعيد استخدامه من الكاش</span></span><b class="mono" dir="ltr">' + fmtNum(usageStats.cached) + "</b></div>" +
+          '<div class="perm-row"><span class="grow"><span class="t">نسبة الكاش</span><span class="s" style="display:block;">الكاش ÷ الداخل</span></span><b class="mono" dir="ltr">' + (pct === null ? "—" : pct + "%") + "</b></div>" +
+          '<div class="perm-row"><span class="grow"><span class="t">المجموع</span><span class="s" style="display:block;">الداخل + الخارج</span></span><b class="mono" dir="ltr">' + fmtNum(usageStats.prompt + usageStats.completion) + "</b></div>" +
+          "</div></div>" +
+          '<button class="btn block" id="usage-reset">تصفير العدّادات</button>';
+        openSheet(html);
+        document.getElementById("usage-reset").addEventListener("click", function () {
+          usageStats.prompt = 0; usageStats.completion = 0; usageStats.cached = 0;
+          closeAll(); toast("تم تصفير عدّادات الاستخدام");
+        });
+      }
+      function addUserMsg(text, atts) {
+        var d = el('<div class="msg user' + (state.userBubble ? "" : " plain") + '"><div class="bubble"></div></div>');
+        if (atts && atts.length) {
+          var attDiv = el('<div class="att"></div>');
+          atts.forEach(function (a) {
+            if (a.kind === "image" && a.url) { var im = document.createElement("img"); im.src = a.url; im.alt = a.name; attDiv.appendChild(im); }
+            else if (a.kind === "audio" && a.url) { var au = document.createElement("audio"); au.controls = true; au.src = a.url; attDiv.appendChild(au); }
+            else { var fc = el('<span class="fchip"></span>'); fc.textContent = a.name + (a.size ? " · " + fmtSize(a.size) : ""); attDiv.appendChild(fc); }
+          });
+          d.insertBefore(attDiv, d.firstElementChild);
+        }
+        d.querySelector(".bubble").textContent = text;
+        chatScroll.appendChild(d);
+        chatScroll.scrollTop = chatScroll.scrollHeight;
+      }
+      function sendChat(presetText) {
+        var text = (presetText != null ? presetText : chatInput.value).trim();
+        if ((!text && !pendingAtts.length) || streaming) return;
+        var atts = pendingAtts.slice();
+        addUserMsg(text, atts);
+        usageStats.prompt += countTokens(text);
+        clearAtts();
+        chatInput.value = "";
+        autoGrow();
+        updateSendBtn();
+        var full = replyCount === 0 ? mainReply : followReply;
+        replyCount++;
+        streamReply(full);
+      }
+      /* Token counting shared by the tok/s meter, the usage view and the
+         prompt measurement: whitespace-separated tokens of real text only. */
+      function countTokens(text) {
+        var t = String(text).trim().split(/\s+/);
+        return (t.length === 1 && t[0] === "") ? 0 : t.length;
+      }
+      function streamReply(full) {
+        var d = el('<div class="msg assistant"><span class="txt" style="white-space:pre-wrap;"></span><span class="cursor-blink"></span></div>');
+        chatScroll.appendChild(d);
+        var txtEl = d.querySelector(".txt");
+        var words = full.split(/(\s+)/);
+        var i = 0, shown = "";
+        var toksEl = document.getElementById("toks");
+        /* REAL tok/s: tokens actually rendered so far / elapsed generation
+           time. No random numbers, no fake jitter. When a real streaming API
+           is wired later, keep this counter: stamp genStart when generation
+           starts, count rendered tokens on every chunk, divide by elapsed. */
+        var genStart = Date.now();
+        function renderRate() {
+          var elapsed = (Date.now() - genStart) / 1000;
+          if (elapsed < 0.05) return;
+          toksEl.textContent = Math.round(countTokens(shown) / elapsed) + " tok/s";
+        }
+        sendBtn.classList.add("stop");
+        sendBtn.innerHTML = '<span class="sq"></span>';
+        sendBtn.classList.remove("ready");
+        function finish() {
+          clearInterval(streaming); streaming = null;
+          d.innerHTML = fmtReply(full);
+          usageStats.completion += countTokens(shown);
+          sendBtn.classList.remove("stop");
+          updateSendBtn();
+          chatScroll.scrollTop = chatScroll.scrollHeight;
+          renderRate();
+        }
+        if (!state.streaming) { d.innerHTML = fmtReply(full); usageStats.completion += countTokens(full); sendBtn.classList.remove("stop"); updateSendBtn(); return; }
+        streaming = setInterval(function () {
+          var step = 3;
+          for (var k = 0; k < step && i < words.length; k++, i++) shown += words[i];
+          txtEl.textContent = shown;
+          renderRate();
+          chatScroll.scrollTop = chatScroll.scrollHeight;
+          if (i >= words.length) finish();
+        }, 42);
+        streaming_finish = finish;
+      }
+      var streaming_finish = null;
+      sendBtn.addEventListener("click", function () {
+        if (streaming && streaming_finish) { streaming_finish(); return; }
+        sendChat();
+      });
+      function updateSendBtn() {
+        if (streaming) return;
+        var has = chatInput.value.trim().length > 0 || pendingAtts.length > 0;
+        sendBtn.classList.toggle("ready", has);
+        sendBtn.innerHTML = ic("up");
+      }
+      function autoGrow() {
+        chatInput.style.height = "auto";
+        chatInput.style.height = Math.min(chatInput.scrollHeight, 110) + "px";
+      }
+      chatInput.addEventListener("input", function () { autoGrow(); updateSendBtn(); });
+      chatInput.addEventListener("keydown", function (e) {
+        if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendChat(); }
+      });
+      /* =============== attachments (+ button, like the Muse composer) ===============
+         The + button sits INSIDE the composer row at its trailing end, next to
+         the text field, with mic and send/stop beside it — not floating, and
+         not where the old paperclip used to be. Its menu offers real uploads:
+         picking an image or a file from the device attaches it to the message.
+         In the Android wrapper, the WebView file chooser (MainActivity) serves
+         these inputs, so they work on-device. */
+      var pendingAtts = [];
+      function renderTray() {
+        var tray = document.getElementById("attach-tray");
+        tray.classList.toggle("has", pendingAtts.length > 0);
+        tray.innerHTML = "";
+        pendingAtts.forEach(function (a, idx) {
+          var chip = el('<span class="attach-chip"></span>');
+          if (a.kind === "image" && a.url) { var im = document.createElement("img"); im.src = a.url; im.alt = a.name; chip.appendChild(im); }
+          else if (a.kind === "audio" && a.url) { var au = document.createElement("audio"); au.controls = true; au.src = a.url; chip.appendChild(au); }
+          var nm = el('<span class="nm"></span>'); nm.textContent = a.name + (a.size ? " · " + fmtSize(a.size) : ""); chip.appendChild(nm);
+          var rm = el('<button class="rm" aria-label="إزالة">\u00d7</button>');
+          rm.addEventListener("click", function () { pendingAtts.splice(idx, 1); renderTray(); updateSendBtn(); });
+          chip.appendChild(rm);
+          tray.appendChild(chip);
+        });
+      }
+      function clearAtts() { pendingAtts = []; renderTray(); }
+      function handlePicked(file, kind) {
+        if (!file) return;
+        var att = { name: file.name, size: file.size, kind: kind, url: null };
+        if (kind === "image" || kind === "audio") {
+          var reader = new FileReader();
+          reader.onload = function () { att.url = reader.result; pendingAtts.push(att); renderTray(); updateSendBtn(); };
+          reader.readAsDataURL(file);
+        } else {
+          pendingAtts.push(att); renderTray(); updateSendBtn();
+        }
+      }
+      document.getElementById("file-image").addEventListener("change", function (e) { handlePicked(e.target.files[0], "image"); e.target.value = ""; });
+      document.getElementById("file-any").addEventListener("change", function (e) { handlePicked(e.target.files[0], "file"); e.target.value = ""; });
+      document.getElementById("file-audio").addEventListener("change", function (e) { handlePicked(e.target.files[0], "audio"); e.target.value = ""; });
+      document.getElementById("btn-plus").addEventListener("click", function () {
+        openSheet(
+          "<h3>إرفاق</h3><p class=\"sub\">اختر من جهازك — يُرفق بالرسالة قبل إرسالها.</p>" +
+          '<button class="opt" data-up="image"><span class="ic" style="width:36px;height:36px;border-radius:11px;background:var(--surface2);display:grid;place-items:center;">' + ic("camera") + '</span><span class="grow">رفع صورة<span class="s">من المعرض أو الملفات</span></span></button>' +
+          '<button class="opt" data-up="file"><span class="ic" style="width:36px;height:36px;border-radius:11px;background:var(--surface2);display:grid;place-items:center;">' + ic("folder") + '</span><span class="grow">رفع ملف<span class="s">أي نوع ملف من الجهاز</span></span></button>'
+        );
+        document.querySelectorAll("#sheet-body [data-up]").forEach(function (b) {
+          b.addEventListener("click", function () {
+            closeAll();
+            document.getElementById(b.getAttribute("data-up") === "image" ? "file-image" : "file-any").click();
+          });
+        });
+      });
+      document.getElementById("btn-mic").addEventListener("click", function () {
+        document.getElementById("file-audio").click();
+      });
+      document.getElementById("btn-newchat").addEventListener("click", resetChat);
+      function resetChat() {
+        if (streaming) { clearInterval(streaming); streaming = null; }
+        var toksReset = document.getElementById("toks"); if (toksReset) toksReset.textContent = "— tok/s";
+        replyCount = 0;
+        sendBtn.classList.remove("stop");
+        chatScroll.innerHTML =
+          '<div class="empty-chat"><div class="big">دردشة جديدة</div>' +
+          "<p>اسأل عن أي شيء — أو جرّب أحد الاقتراحات، ثم افتح الإعدادات من الأسفل لترى قلب التصميم.</p>" +
+          '<div class="sugg">' +
+          '<button data-sugg="0">شنو أگدر أتحكّم بيه من الإعدادات؟</button>' +
+          '<button data-sugg="1">شلون تشتغل الصلاحيات بثلاثة أوضاع؟</button>' +
+          '<button data-sugg="2">شنو الفرق بين المزوّد والموصّل؟</button>' +
+          "</div></div>";
+        document.querySelectorAll("[data-sugg]").forEach(function (b) {
+          b.addEventListener("click", function () {
+            var q = b.textContent;
+            chatScroll.innerHTML = "";
+            sendChat(q);
+          });
+        });
+        updateSendBtn();
+        showScreen("chat");
+      }
+
+      /* =============== top bar wiring =============== */
+      document.getElementById("btn-drawer").innerHTML = ic("menu");
+      document.getElementById("tgl-web").innerHTML = ic("globe");
+      document.getElementById("tgl-fast").innerHTML = ic("zap");
+      document.getElementById("btn-context").innerHTML = ic("layers");
+      document.getElementById("btn-newchat").innerHTML = ic("edit");
+      document.getElementById("btn-plus").innerHTML = ic("plus");
+      document.getElementById("btn-mic").innerHTML = ic("mic");
+      document.querySelectorAll("[data-ic]").forEach(function (s) { s.innerHTML = ic(s.getAttribute("data-ic")); });
+      document.querySelectorAll("[data-back]").forEach(function (b) {
+        b.innerHTML = ic("chevR");
+        b.addEventListener("click", function () { showScreen(b.getAttribute("data-back")); });
+      });
+      document.getElementById("tgl-web").addEventListener("click", function () {
+        state.webSearch = !state.webSearch;
+        syncTopToggles();
+        toast(state.webSearch ? "بحث الويب: مفعّل" : "بحث الويب: متوقف");
+      });
+      document.getElementById("tgl-fast").addEventListener("click", function () {
+        state.fast = !state.fast;
+        this.classList.toggle("on", state.fast);
+        toast(state.fast ? "الوضع السريع: مفعّل" : "الوضع السريع: متوقف");
+      });
+
+      /* =============== drawer (built lazily on first open) =============== */
+      var drawerBuilt = false;
+      function buildDrawer() {
+        drawer.innerHTML =
+          '<button class="btn accent block" id="btn-drawer-new"></button>' +
+          '<div class="searchbox" style="margin-top:12px;"><span data-ic="search"></span><input id="drawer-search" type="text" placeholder="بحث في الدردشات…" /></div>' +
+          '<div class="d-title">الدردشات</div>' +
+          '<div style="overflow-y:auto; flex:1;" id="drawer-chats"></div>' +
+          '<button class="chat-item" id="drawer-settings" style="border-top:1px solid var(--border-soft); border-radius:0; padding-top:14px;">' +
+          '<span data-ic="gear"></span><span class="grow">الإعدادات</span></button>';
+        drawer.querySelectorAll("[data-ic]").forEach(function (s) { s.innerHTML = ic(s.getAttribute("data-ic")); });
+        var nb = document.getElementById("btn-drawer-new");
+        nb.innerHTML = ic("edit") + "دردشة جديدة";
+        nb.addEventListener("click", resetChat);
+        document.getElementById("drawer-settings").addEventListener("click", function () { showScreen("settings"); });
+        document.getElementById("drawer-search").addEventListener("input", function (e) { renderDrawerChats(e.target.value.trim()); });
+        renderDrawerChats("");
+        drawerBuilt = true;
+      }
+      document.getElementById("btn-drawer").addEventListener("click", function () {
+        if (!drawerBuilt) buildDrawer();
+        overlay.classList.add("open");
+        drawer.classList.add("open");
+      });
+      function renderDrawerChats(filter) {
+        var wrap = document.getElementById("drawer-chats");
+        wrap.innerHTML = "";
+        chats.forEach(function (c, idx) {
+          if (filter && c.title.indexOf(filter) === -1) return;
+          var b = el('<button class="chat-item' + (idx === 0 ? " on" : "") + '"><span class="grow">' + esc(c.title) + "</span><time>" + esc(c.time) + "</time></button>");
+          b.addEventListener("click", function () {
+            closeAll();
+            if (streaming) { clearInterval(streaming); streaming = null; }
+            replyCount = 1;
+            sendBtn.classList.remove("stop");
+            chatScroll.innerHTML = "";
+            addUserMsg(c.title);
+            var d = el('<div class="msg assistant"></div>');
+            d.innerHTML = fmtReply(c.reply);
+            chatScroll.appendChild(d);
+            showScreen("chat");
+            document.querySelectorAll("#drawer-chats .chat-item").forEach(function (x) { x.classList.remove("on"); });
+            b.classList.add("on");
+          });
+          wrap.appendChild(b);
+        });
+        if (!wrap.children.length) wrap.innerHTML = '<p class="hint" style="margin:8px;">لا دردشات مطابقة.</p>';
+      }
+      /* =============== search wiring =============== */
+      document.getElementById("prov-search").addEventListener("input", function (e) { renderProviders(e.target.value.trim()); });
+      document.getElementById("conn-search").addEventListener("input", function (e) { renderConnectors(e.target.value.trim()); });
+
+      /* =============== nav to detail screens re-render hub =============== */
+      var origShow = showScreen;
+      showScreen = function (id) {
+        if (id === "settings") refreshHub();
+        if (id === "generation") renderGeneration();
+        if (id === "appearance") renderAppearance();
+        if (id === "memory") renderMemory();
+        if (id === "about") renderAbout();
+        origShow(id);
+      };
+
+      /* =============== init =============== */
+      buildNav();
+      renderProviders("");
+      renderConnectors("");
+      renderPermissions();
+      buildHub();
+      updateModelChip();
+      updateThinkChip();
+      updateSendBtn();
+      syncTopToggles();
+      resetChat();
+    </script>
+  </body>
+</html>
